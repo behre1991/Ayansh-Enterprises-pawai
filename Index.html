@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ayansh Enterprises Smart App</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #eef2f7; margin: 0; padding: 10px; }
+        .header { background: #004a99; color: white; padding: 15px; text-align: center; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .card { background: white; padding: 15px; margin-bottom: 12px; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.08); }
+        .summary-card { background: #fff; border-left: 5px solid #28a745; text-align: center; padding: 10px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; box-sizing: border-box; }
+        .btn-save { background: #28a745; color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; }
+        .btn-save:active { background: #218838; transform: scale(0.98); }
+        #qrcode { display: flex; justify-content: center; margin: 15px 0; padding: 10px; background: white; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th, td { border-bottom: 1px solid #eee; padding: 12px; text-align: left; }
+        .del-btn { background: #ff4d4d; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+        .search-box { display: flex; gap: 8px; margin-bottom: 5px; }
+        .export-btn { background: #1d6f42; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 14px; cursor: pointer; white-space: nowrap; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2 style="margin:0;">आयांश एंटरप्राइजेज</h2>
+    <p style="margin:5px 0 0; font-size: 12px; opacity: 0.9;">GST: 23BZQPB8324N1ZQ | पवई</p>
+</div>
+
+<div class="card summary-card">
+    <small style="color: #666; font-weight: bold; text-transform: uppercase;">आज की कुल बिक्री</small>
+    <h2 id="dailyTotal" style="margin: 5px 0; color: #28a745;">₹0.00</h2>
+</div>
+
+<div class="card">
+    <input type="text" id="custName" placeholder="ग्राहक का नाम">
+    <input type="number" id="custPhone" placeholder="WhatsApp नंबर (10 अंक)">
+    <input type="number" id="custAmt" placeholder="रकम (₹)">
+    <select id="gstRate">
+        <option value="0">GST (0%)</option>
+        <option value="5">GST (5%)</option>
+        <option value="12">GST (12%)</option>
+        <option value="18">GST (18%)</option>
+    </select>
+    <button class="btn-save" onclick="processPayment()">💰 बिल बनाएँ और QR दिखाएँ</button>
+</div>
+
+<div id="paymentModal" class="card" style="display:none; border: 2px solid #004a99; position: fixed; top: 10%; left: 5%; width: 90%; z-index: 100; box-sizing: border-box;">
+    <h3 id="payTitle" style="margin-top:0;"></h3>
+    <div id="qrcode"></div>
+    <p style="font-size: 14px; color: #666;">ग्राहक को स्कैन करने को कहें</p>
+    <button onclick="saveAndClose()" style="background:#004a99; color:white; border:none; padding:15px; border-radius:8px; width:100%; font-weight:bold; cursor:pointer;">रिकॉर्ड सेव करें और WhatsApp भेजें</button>
+    <button onclick="document.getElementById('paymentModal').style.display='none'" style="background:none; color:red; border:none; margin-top:10px; cursor:pointer;">रद्द करें</button>
+</div>
+
+<div class="card">
+    <div class="search-box">
+        <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="नाम से खोजें..." style="margin:0;">
+        <button class="export-btn" onclick="exportToCSV()">Excel 📥</button>
+    </div>
+    <div style="overflow-x:auto;">
+        <table>
+            <thead>
+                <tr><th>विवरण</th><th>कुल</th><th>हटाएं</th></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const MY_UPI_ID = "SBIBHIM.INSTANT73331772586360110@sbipay";
+    let currentEntry = null;
+
+    function processPayment() {
+        const name = document.getElementById('custName').value;
+        const phone = document.getElementById('custPhone').value;
+        const amt = parseFloat(document.getElementById('custAmt').value);
+        const gst = parseInt(document.getElementById('gstRate').value);
+        
+        if(!name || isNaN(amt)) { alert("कृपया नाम और सही रकम भरें"); return; }
+
+        const total = (amt + (amt * gst / 100)).toFixed(2);
+        const date = new Date().toLocaleString('hi-IN', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+        
+        document.getElementById('paymentModal').style.display = 'block';
+        document.getElementById('payTitle').innerText = `कुल बिल: ₹${total}`;
+        
+        const qrDiv = document.getElementById('qrcode');
+        qrDiv.innerHTML = ""; 
+        const upiLink = `upi://pay?pa=${MY_UPI_ID}&pn=Ayansh%20Enterprises&am=${total}&tn=Bill_${name.replace(/\s/g, '%20')}&cu=INR`;
+        
+        new QRCode(qrDiv, { text: upiLink, width: 200, height: 200 });
+
+        currentEntry = { id: Date.now(), date, name, phone, total };
+    }
+
+    function saveAndClose() {
+        if(currentEntry) {
+            let data = JSON.parse(localStorage.getItem('ayansh_data') || '[]');
+            data.unshift(currentEntry);
+            localStorage.setItem('ayansh_data', JSON.stringify(data));
+            renderTable();
+            
+            if(currentEntry.phone) {
+                let cleanPhone = currentEntry.phone.length === 10 ? "91" + currentEntry.phone : currentEntry.phone;
+                const msg = `नमस्ते *${currentEntry.name}*!%0A*आयांश एंटरप्राइजेज* से आपका बिल: ₹*${currentEntry.total}*%0Aतारीख: ${currentEntry.date}%0Aधन्यवाद!`;
+                window.open(`https://wa.me/${cleanPhone}?text=${msg}`, '_blank');
+            }
+        }
+        document.getElementById('paymentModal').style.display = 'none';
+        clearInputs();
+    }
+
+    function renderTable() {
+        const data = JSON.parse(localStorage.getItem('ayansh_data') || '[]');
+        let html = '';
+        let dayTotal = 0;
+        const todayStr = new Date().toLocaleDateString('hi-IN', {day:'2-digit', month:'short'});
+
+        data.forEach(item => {
+            if(item.date.includes(todayStr)) { dayTotal += parseFloat(item.total); }
+            html += `<tr>
+                <td><b>${item.name}</b><br><small style="color:#777">${item.date}</small></td>
+                <td>₹${item.total}</td>
+                <td><button class="del-btn" onclick="deleteEntry(${item.id})">🗑️</button></td>
+            </tr>`;
+        });
+        document.getElementById('tableBody').innerHTML = html;
+        document.getElementById('dailyTotal').innerText = `₹${dayTotal.toFixed(2)}`;
+    }
+
+    function searchTable() {
+        let input = document.getElementById("searchInput").value.toLowerCase();
+        let tr = document.getElementById("tableBody").getElementsByTagName("tr");
+        for (let i = 0; i < tr.length; i++) {
+            let name = tr[i].getElementsByTagName("td")[0].textContent.toLowerCase();
+            tr[i].style.display = name.includes(input) ? "" : "none";
+        }
+    }
+
+    function exportToCSV() {
+        const data = JSON.parse(localStorage.getItem('ayansh_data') || '[]');
+        if(data.length === 0) return;
+        let csv = "तारीख,नाम,फोन,कुल रकम\n";
+        data.forEach(i => csv += `${i.date},${i.name},${i.phone},${i.total}\n`);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = "Ayansh_Sales.csv";
+        link.click();
+    }
+
+    function deleteEntry(id) {
+        if(confirm("रिकॉर्ड हटाना चाहते हैं?")) {
+            let data = JSON.parse(localStorage.getItem('ayansh_data') || '[]');
+            data = data.filter(i => i.id !== id);
+            localStorage.setItem('ayansh_data', JSON.stringify(data));
+            renderTable();
+        }
+    }
+
+    function clearInputs() {
+        document.getElementById('custName').value = '';
+        document.getElementById('custPhone').value = '';
+        document.getElementById('custAmt').value = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', renderTable);
+</script>
+
+</body>
+</html>
