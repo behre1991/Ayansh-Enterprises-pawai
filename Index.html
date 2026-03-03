@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayansh Pro - Fixed Version</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        :root { --p: #004a99; --s: #28a745; --d: #dc3545; --w: #ffffff; --g: #f4f7f6; }
+        body { font-family: sans-serif; background: var(--g); margin: 0; padding-bottom: 70px; }
+        
+        /* Login Page */
+        #loginPage { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--p); z-index:2000; display:flex; align-items:center; justify-content:center; }
+        .login-card { background:white; padding:30px; border-radius:15px; width:280px; text-align:center; }
+        
+        /* App Layout */
+        #mainApp { display:none; }
+        .header { background: var(--p); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; }
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+        .card { background: var(--w); padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .btn { border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .btn-p { background: var(--p); color: white; }
+        .btn-s { background: var(--s); color: white; }
+        
+        .nav-bar { display: flex; background: white; position: fixed; bottom: 0; width: 100%; border-top: 1px solid #ddd; z-index: 100; }
+        .nav-item { flex: 1; padding: 15px; text-align: center; color: #666; cursor: pointer; font-size: 13px; }
+        .nav-active { color: var(--p); font-weight: bold; border-top: 3px solid var(--p); }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
+        .hidden { display: none; }
+        
+        /* Final Bill Success Modal */
+        #successModal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:1000; display:none; align-items:center; justify-content:center; }
+    </style>
+</head>
+<body>
+
+<div id="loginPage">
+    <div class="login-card">
+        <h2 style="color:var(--p)">आयांश लॉगिन</h2>
+        <input type="text" id="userInput" placeholder="यूजर आईडी (ayansh)">
+        <input type="password" id="passInput" placeholder="पासवर्ड (1234)">
+        <button class="btn btn-p" onclick="doLogin()">लॉगिन करें</button>
+        <p id="err" style="color:red; font-size:12px; margin-top:10px;"></p>
+    </div>
+</div>
+
+<div id="mainApp">
+    <div class="header">
+        <h2 style="margin:0">आयांश स्टोर प्रो</h2>
+        <small id="statToday">आज की सेल: ₹0</small>
+    </div>
+
+    <div class="container">
+        <div id="sec-billing">
+            <div class="card">
+                <h3>🧾 बिल काउंटर</h3>
+                <select id="prodSelect" onchange="fillRate()"></select>
+                <div style="display:flex; gap:10px;">
+                    <input type="number" id="qty" placeholder="मात्रा">
+                    <input type="number" id="rate" placeholder="रेट">
+                </div>
+                <button class="btn btn-s" onclick="addToCart()">+ आइटम जोड़ें</button>
+                <div id="cartView" class="hidden">
+                    <table style="margin-top:10px;"><tbody id="cartBody"></tbody></table>
+                    <h3 id="totalText" style="text-align:right; color:var(--p)">कुल: ₹0</h3>
+                </div>
+            </div>
+            <div class="card">
+                <input type="text" id="cName" placeholder="ग्राहक का नाम">
+                <button class="btn btn-p" onclick="finishBill()">⚡ बिल फाइनल करें</button>
+            </div>
+        </div>
+
+        <div id="sec-history" class="hidden">
+            <div class="card">
+                <h3>📜 बिल इतिहास और प्रिंट</h3>
+                <div id="historyList"></div>
+            </div>
+        </div>
+
+        <div id="sec-stock" class="hidden">
+            <div class="card">
+                <h3>📦 स्टॉक मैनेजमेंट</h3>
+                <input type="text" id="sName" placeholder="सामान का नाम">
+                <input type="number" id="sRate" placeholder="रेट">
+                <input type="number" id="sQty" placeholder="मात्रा">
+                <button class="btn btn-p" onclick="saveStock()">स्टॉक में जोड़ें</button>
+            </div>
+            <div class="card">
+                <table>
+                    <thead><tr><th>नाम</th><th>रेट</th><th>स्टॉक</th></tr></thead>
+                    <tbody id="stockBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item nav-active" onclick="tab('billing')">🧾 बिलिंग</div>
+        <div class="nav-item" onclick="tab('history')">📜 इतिहास</div>
+        <div class="nav-item" onclick="tab('stock')">📦 स्टॉक</div>
+    </div>
+</div>
+
+<div id="successModal">
+    <div style="background:white; padding:25px; border-radius:15px; width:80%; text-align:center;">
+        <h1 style="color:var(--s)">✓</h1>
+        <h3>बिल सेव हो गया!</h3>
+        <p id="lastBillInfo"></p>
+        <div id="qrBox" style="display:inline-block; margin:10px;"></div>
+        <button class="btn btn-p" onclick="printLast()">🖨️ अभी प्रिंट करें</button>
+        <button class="btn btn-s" onclick="closeSuccess()" style="margin-top:10px;">अगला बिल बनाएँ</button>
+    </div>
+</div>
+
+<script>
+    let inventory = JSON.parse(localStorage.getItem('ay_v1_inv') || '[]');
+    let sales = JSON.parse(localStorage.getItem('ay_v1_sales') || '[]');
+    let cart = [];
+    let currentSale = null;
+
+    // LOGIN FIX
+    function doLogin() {
+        const u = document.getElementById('userInput').value;
+        const p = document.getElementById('passInput').value;
+        if(u === "ayansh" && p === "1234") {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            refresh();
+        } else {
+            document.getElementById('err').innerText = "गलत आईडी या पासवर्ड!";
+        }
+    }
+
+    function tab(id) {
+        document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
+        document.getElementById('sec-' + id).classList.remove('hidden');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active'));
+        event.currentTarget.classList.add('nav-active');
+        if(id === 'history') renderHistory();
+    }
+
+    // STOCK
+    function saveStock() {
+        const n = document.getElementById('sName').value;
+        const r = document.getElementById('sRate').value;
+        const q = document.getElementById('sQty').value;
+        if(!n || !r) return;
+        inventory.push({name:n, rate:r, qty:q});
+        localStorage.setItem('ay_v1_inv', JSON.stringify(inventory));
+        renderStock(); refresh();
+        alert("सेव हुआ!");
+    }
+
+    function renderStock() {
+        document.getElementById('stockBody').innerHTML = inventory.map(p => `<tr><td>${p.name}</td><td>₹${p.rate}</td><td>${p.qty}</td></tr>`).join('');
+    }
+
+    function refresh() {
+        document.getElementById('prodSelect').innerHTML = '<option value="">चुनें...</option>' + inventory.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+        const today = new Date().toLocaleDateString();
+        const total = sales.filter(s => s.date === today).reduce((a,b) => a + b.total, 0);
+        document.getElementById('statToday').innerText = `आज की सेल: ₹${total}`;
+        renderStock();
+    }
+
+    function fillRate() {
+        const p = inventory.find(x => x.name === document.getElementById('prodSelect').value);
+        if(p) document.getElementById('rate').value = p.rate;
+    }
+
+    // BILLING
+    function addToCart() {
+        const name = document.getElementById('prodSelect').value;
+        const q = parseInt(document.getElementById('qty').value);
+        const r = parseFloat(document.getElementById('rate').value);
+        if(!name || !q) return;
+        cart.push({name, qty:q, rate:r, total: q*r});
+        renderCart();
+    }
+
+    function renderCart() {
+        document.getElementById('cartView').classList.remove('hidden');
+        let t = 0;
+        document.getElementById('cartBody').innerHTML = cart.map((c,i) => {
+            t += c.total;
+            return `<tr><td>${c.name}</td><td>${c.qty}</td><td>₹${c.total}</td><td onclick="cart.splice(${i},1);renderCart()" style="color:red">✖</td></tr>`;
+        }).join('');
+        document.getElementById('totalText').innerText = "कुल: ₹" + t;
+    }
+
+    function finishBill() {
+        const name = document.getElementById('cName').value;
+        if(cart.length === 0 || !name) return alert("नाम और सामान भरें");
+        
+        const total = cart.reduce((a,b) => a + b.total, 0);
+        currentSale = { id: Date.now(), customer: name, items: [...cart], total: total, date: new Date().toLocaleDateString() };
+        
+        sales.unshift(currentSale);
+        localStorage.setItem('ay_v1_sales', JSON.stringify(sales));
+
+        // Show Success Modal
+        document.getElementById('successModal').style.display = 'flex';
+        document.getElementById('lastBillInfo').innerText = `${name} - ₹${total}`;
+        
+        document.getElementById('qrBox').innerHTML = "";
+        new QRCode(document.getElementById('qrBox'), { text: `upi://pay?pa=SBIBHIM.INSTANT73331772586360110@sbipay&am=${total}`, width:120, height:120 });
+    }
+
+    function closeSuccess() {
+        document.getElementById('successModal').style.display = 'none';
+        cart = []; document.getElementById('cName').value = "";
+        document.getElementById('cartView').classList.add('hidden');
+        refresh();
+    }
+
+    // PRINTING
+    function renderHistory() {
+        document.getElementById('historyList').innerHTML = sales.map(s => `
+            <div style="border-bottom:1px solid #eee; padding:10px 0; display:flex; justify-content:space-between; align-items:center;">
+                <div><b>${s.customer}</b><br><small>${s.date}</small></div>
+                <div style="font-weight:bold">₹${s.total}</div>
+                <button onclick="printAnyBill(${s.id})" style="padding:5px 10px; background:var(--p); color:white; border:none; border-radius:5px;">🖨️</button>
+            </div>
+        `).join('') || "कोई बिल नहीं है।";
+    }
+
+    function printLast() { printAnyBill(currentSale.id); }
+
+    function printAnyBill(id) {
+        const s = sales.find(x => x.id === id);
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.text("Ayansh Store Pro", 105, 20, {align:'center'});
+        doc.text(`Customer: ${s.customer} | Date: ${s.date}`, 14, 35);
+        const rows = s.items.map(i => [i.name, i.qty, i.rate, i.total]);
+        doc.autoTable({ startY: 40, head: [['Item', 'Qty', 'Rate', 'Total']], body: rows });
+        doc.text(`Total: Rs. ${s.total}`, 14, doc.lastAutoTable.finalY + 10);
+        doc.save(`Bill_${s.customer}.pdf`);
+    }
+</script>
+</body>
+  </html>
+  
