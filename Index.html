@@ -2,7 +2,241 @@
 <html lang="hi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"><!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayansh Business Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root { --p: #004a99; --s: #28a745; --d: #dc3545; --w: #ffffff; --g: #6c757d; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding-bottom: 60px; user-select: none; }
+        .header { background: var(--p); color: white; padding: 15px; text-align: center; }
+        .container { padding: 15px; max-width: 600px; margin: auto; }
+        .card { background: var(--w); padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        
+        /* Tabs */
+        .nav-bar { display: flex; background: var(--w); position: fixed; bottom: 0; width: 100%; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 100; }
+        .nav-item { flex: 1; padding: 12px; text-align: center; font-size: 12px; cursor: pointer; color: var(--g); }
+        .nav-active { color: var(--p); border-top: 3px solid var(--p); font-weight: bold; }
+
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .btn { border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
+        .btn-p { background: var(--p); color: white; }
+        .btn-s { background: var(--s); color: white; }
+        .btn-d { background: var(--d); color: white; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+        .badge-red { background: #ffebee; color: var(--d); padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2 style="margin:0">आयांश स्टोर प्रो</h2>
+    <div id="quickStats" style="font-size:12px; margin-top:5px; opacity:0.9;">आज की सेल: ₹0 | कुल उधारी: ₹0</div>
+</div>
+
+<div class="container">
+    <div id="tab-billing" class="tab-content">
+        <div class="card">
+            <h3 style="margin-top:0">🧾 नया बिल</h3>
+            <select id="prodSelect" onchange="fillPrice()"><option value="">सामान चुनें...</option></select>
+            <div style="display: flex; gap: 8px;">
+                <input type="number" id="billQty" placeholder="Qty">
+                <input type="number" id="billRate" placeholder="रेट">
+            </div>
+            <button class="btn btn-s" onclick="addToCart()">+ आइटम जोड़ें</button>
+            <div id="cartList" style="margin-top:10px;"></div>
+            <hr>
+            <input type="text" id="custName" placeholder="ग्राहक का नाम">
+            <input type="number" id="custPhone" placeholder="मोबाइल नंबर">
+            <select id="paymentStatus">
+                <option value="Paid">नकद (Paid)</option>
+                <option value="Credit">उधारी (Credit)</option>
+            </select>
+            <button class="btn btn-p" onclick="processSale()">⚡ बिल पक्का करें</button>
+        </div>
+    </div>
+
+    <div id="tab-stock" class="tab-content hidden">
+        <div class="card">
+            <h3>📦 स्टॉक प्रबंधन</h3>
+            <input type="text" id="invName" placeholder="सामान का नाम">
+            <input type="number" id="invRate" placeholder="बिक्री रेट">
+            <input type="number" id="invStock" placeholder="स्टॉक मात्रा">
+            <button class="btn btn-p" onclick="saveStock()">स्टॉक सेव करें</button>
+        </div>
+        <div class="card">
+            <table id="stockTable"><thead><tr><th>नाम</th><th>रेट</th><th>स्टॉक</th></tr></thead><tbody></tbody></table>
+        </div>
+    </div>
+
+    <div id="tab-khata" class="tab-content hidden">
+        <div class="card">
+            <h3>📓 उधारी खाता</h3>
+            <div id="khataList"></div>
+        </div>
+    </div>
+</div>
+
+<div class="nav-bar">
+    <div class="nav-item nav-active" onclick="switchTab('billing')">🧾 बिलिंग</div>
+    <div class="nav-item" onclick="switchTab('stock')">📦 स्टॉक</div>
+    <div class="nav-item" onclick="switchTab('khata')">📓 खाता</div>
+</div>
+
+<div id="qrModal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:200; display:flex; align-items:center; justify-content:center;">
+    <div style="background:white; padding:20px; border-radius:15px; width:80%; text-align:center;">
+        <h2 id="qrAmtText">₹0</h2>
+        <div id="qrcode" style="display:flex; justify-content:center; margin:15px;"></div>
+        <button class="btn btn-p" onclick="finalizeSale()">भुगतान सफल / बिल सेव करें</button>
+        <button class="btn btn-d" onclick="closeModal()" style="margin-top:10px;">रद्द करें</button>
+    </div>
+</div>
+
+<script>
+    let inventory = JSON.parse(localStorage.getItem('ay_stock') || '[]');
+    let sales = JSON.parse(localStorage.getItem('ay_sales') || '[]');
+    let cart = [];
+    const UPI_ID = "SBIBHIM.INSTANT73331772586360110@sbipay";
+
+    function switchTab(t) {
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        document.getElementById('tab-' + t).classList.remove('hidden');
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('nav-active'));
+        event.currentTarget.classList.add('nav-active');
+        if(t === 'stock') renderStock();
+        if(t === 'khata') renderKhata();
+        updateDropdown();
+        updateStats();
+    }
+
+    // --- STOCK LOGIC ---
+    function saveStock() {
+        const name = document.getElementById('invName').value.trim();
+        const rate = document.getElementById('invRate').value;
+        const qty = parseInt(document.getElementById('invStock').value);
+        if(!name || !rate) return;
+        const idx = inventory.findIndex(p => p.name.toLowerCase() === name.toLowerCase());
+        if(idx > -1) inventory[idx] = {name, rate, stock: qty};
+        else inventory.push({name, rate, stock: qty});
+        localStorage.setItem('ay_stock', JSON.stringify(inventory));
+        renderStock();
+        alert("स्टॉक सुरक्षित!");
+    }
+
+    function renderStock() {
+        const tb = document.querySelector('#stockTable tbody');
+        tb.innerHTML = inventory.map(p => `<tr><td>${p.name}</td><td>₹${p.rate}</td><td class="${p.stock < 5 ? 'badge-red' : ''}">${p.stock}</td></tr>`).join('');
+    }
+
+    function updateDropdown() {
+        const sel = document.getElementById('prodSelect');
+        sel.innerHTML = '<option value="">सामान चुनें...</option>' + inventory.map(p => `<option value="${p.name}">${p.name} (Stock: ${p.stock})</option>`).join('');
+    }
+
+    function fillPrice() {
+        const p = inventory.find(x => x.name === document.getElementById('prodSelect').value);
+        if(p) document.getElementById('billRate').value = p.rate;
+    }
+
+    // --- BILLING LOGIC ---
+    function addToCart() {
+        const name = document.getElementById('prodSelect').value;
+        const qty = parseInt(document.getElementById('billQty').value);
+        const rate = parseFloat(document.getElementById('billRate').value);
+        if(!name || !qty) return;
+        cart.push({name, qty, rate, total: (qty*rate)});
+        renderCart();
+    }
+
+    function renderCart() {
+        let h = '<table>';
+        cart.forEach((item, i) => h += `<tr><td>${item.name}</td><td>${item.qty} x ${item.rate}</td><td>₹${item.total}</td><td onclick="cart.splice(${i},1);renderCart()" style="color:red">✖</td></tr>`);
+        document.getElementById('cartList').innerHTML = h + '</table>';
+    }
+
+    function processSale() {
+        const total = cart.reduce((s, i) => s + i.total, 0);
+        const status = document.getElementById('paymentStatus').value;
+        if(total <= 0) return alert("कार्ट खाली है");
+        
+        if(status === 'Paid') {
+            document.getElementById('qrAmtText').innerText = "कुल: ₹" + total;
+            document.getElementById('qrModal').classList.remove('hidden');
+            document.getElementById('qrcode').innerHTML = "";
+            new QRCode(document.getElementById('qrcode'), { text: `upi://pay?pa=${UPI_ID}&am=${total}&cu=INR`, width: 180, height: 180 });
+        } else {
+            finalizeSale(); // Credit sales save directly
+        }
+    }
+
+    function finalizeSale() {
+        const total = cart.reduce((s, i) => s + i.total, 0);
+        const sale = {
+            id: Date.now(),
+            customer: document.getElementById('custName').value || "नकद ग्राहक",
+            phone: document.getElementById('custPhone').value,
+            items: [...cart],
+            total: total,
+            status: document.getElementById('paymentStatus').value,
+            date: new Date().toLocaleDateString('hi-IN')
+        };
+        
+        // Update Stock
+        cart.forEach(c => {
+            let p = inventory.find(x => x.name === c.name);
+            if(p) p.stock -= c.qty;
+        });
+
+        sales.unshift(sale);
+        localStorage.setItem('ay_sales', JSON.stringify(sales));
+        localStorage.setItem('ay_stock', JSON.stringify(inventory));
+        
+        alert(sale.status === 'Credit' ? "उधारी में दर्ज हुआ!" : "बिक्री सफल!");
+        cart = []; renderCart(); closeModal(); updateStats();
+    }
+
+    // --- KHATA LOGIC ---
+    function renderKhata() {
+        const khata = sales.filter(s => s.status === 'Credit');
+        document.getElementById('khataList').innerHTML = khata.map(s => `
+            <div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                <div><b>${s.customer}</b><br><small>${s.date}</small></div>
+                <div style="color:var(--d); font-weight:bold;">₹${s.total}</div>
+                <button class="btn-s" style="width:auto; padding:5px 10px;" onclick="clearDue(${s.id})">Paid</button>
+            </div>
+        `).join('') || "कोई उधारी नहीं है।";
+    }
+
+    function clearDue(id) {
+        let s = sales.find(x => x.id === id);
+        if(s) s.status = 'Paid';
+        localStorage.setItem('ay_sales', JSON.stringify(sales));
+        renderKhata();
+        updateStats();
+    }
+
+    function updateStats() {
+        const today = new Date().toLocaleDateString('hi-IN');
+        const daySales = sales.filter(s => s.date === today && s.status === 'Paid').reduce((s, i) => s + parseFloat(i.total), 0);
+        const totalCredit = sales.filter(s => s.status === 'Credit').reduce((s, i) => s + parseFloat(i.total), 0);
+        document.getElementById('quickStats').innerText = `आज की सेल: ₹${daySales} | कुल उधारी: ₹${totalCredit}`;
+    }
+
+    function closeModal() { document.getElementById('qrModal').classList.add('hidden'); }
+    
+    // Initial setup
+    updateDropdown();
+    updateStats();
+</script>
+</body>
+</html>
+
     <title>Ayansh Enterprises Smart App</title>
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
