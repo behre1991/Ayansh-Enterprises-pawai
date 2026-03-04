@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>अयांश मुनीम मास्टर | V50</title>
+    <style>
+        :root { --p: #003399; --s: #ff6600; --d: #cc0000; --ok: #008000; --g: #f2f2f2; --w: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--g); margin: 0; padding-bottom: 80px; }
+        .header { background: var(--p); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 1000; }
+        .page { display: none; padding: 12px; max-width: 500px; margin: auto; animation: fadeIn 0.2s; }
+        .page-active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .card { background: var(--w); padding: 15px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 12px; }
+        h3 { margin: 0 0 10px 0; color: var(--p); font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1.5px solid #ccc; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        .btn { border: none; padding: 14px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .btn-p { background: var(--p); color: white; }
+        .btn-s { background: var(--s); color: white; }
+        .btn-ok { background: var(--ok); color: white; }
+        .nav-bar { display: flex; background: white; position: fixed; bottom: 0; width: 100%; height: 75px; border-top: 1px solid #ddd; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #666; cursor: pointer; }
+        .nav-active { color: var(--p); font-weight: bold; background: #f0f4ff; border-top: 4px solid var(--p); }
+        #qrOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: none; align-items: center; justify-content: center; }
+        .qr-card { background: white; padding: 20px; border-radius: 20px; text-align: center; width: 85%; max-width: 320px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { border-bottom: 1px solid #eee; padding: 10px 5px; text-align: left; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2 id="dispBiz" style="margin:0; font-size:18px;">अयांश इंटरप्राइजेज</h2>
+</div>
+
+<div id="p-bill" class="page page-active">
+    <div class="card">
+        <h3>👤 नया बिल</h3>
+        <input type="text" id="cN" placeholder="किसान का नाम">
+        <input type="text" id="iN" placeholder="सामान का नाम" list="stkData" onchange="autoRate(this.value)">
+        <datalist id="stkData"></datalist>
+        <div style="display:flex; gap:10px;">
+            <input type="number" id="iQ" placeholder="मात्रा">
+            <input type="number" id="iP" placeholder="रेट ₹">
+        </div>
+        <button class="btn btn-p" onclick="addToList()">➕ लिस्ट में जोड़ें</button>
+    </div>
+    <div id="billArea" class="card" style="display:none;">
+        <table id="billTable"><tbody></tbody></table>
+        <h2 id="totalShow" style="text-align:right; color:var(--d); margin:10px 0;">₹0</h2>
+        <button class="btn btn-ok" onclick="saveBill()">💾 बिल पक्का करें</button>
+    </div>
+</div>
+
+<div id="p-khata" class="page">
+    <div class="card">
+        <h3>📜 किसान लेजर (हिसाब)</h3>
+        <input type="text" id="srch" placeholder="नाम से खोजें..." onkeyup="renderKhata()">
+        <div id="khataList" style="margin-top:10px;"></div>
+    </div>
+</div>
+
+<div id="p-set" class="page">
+    <div class="card">
+        <h3>⚙️ सेटिंग</h3>
+        <label>दुकान का नाम</label><input type="text" id="sBiz">
+        <label>UPI ID</label><input type="text" id="sUpi">
+        <button class="btn btn-ok" onclick="saveSet()">अपडेट करें</button>
+    </div>
+</div>
+
+<div id="qrOverlay">
+    <div class="qr-card">
+        <h3>पेमेंट QR</h3>
+        <div id="qrPlace"></div>
+        <h2 id="qrAmt" style="color:var(--p);">₹0</h2>
+        <button class="btn btn-p" onclick="closeQR()">बंद करें</button>
+    </div>
+</div>
+
+<nav class="nav-bar">
+    <div class="nav-item nav-active" onclick="tab('bill', this)">🛒<span>बिक्री</span></div>
+    <div class="nav-item" onclick="tab('khata', this)">📜<span>खाता</span></div>
+    <div class="nav-item" onclick="tab('set', this)">⚙️<span>सेटिंग</span></div>
+</nav>
+
+<script>
+    let DB = JSON.parse(localStorage.getItem('ay_v50')) || { sls: [], stk: [], cfg: {n:"अयांश इंटरप्राइजेज", upi:"your@upi"} };
+    let temp = [];
+
+    function save() { 
+        localStorage.setItem('ay_v50', JSON.stringify(DB)); 
+        document.getElementById('dispBiz').innerText = DB.cfg.n;
+    }
+
+    function tab(p, el) {
+        document.querySelectorAll('.page').forEach(x => x.classList.remove('page-active'));
+        document.getElementById('p-'+p).classList.add('page-active');
+        document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('nav-active'));
+        el.classList.add('nav-active');
+        if(p === 'khata') renderKhata();
+    }
+
+    // --- बिलिंग ---
+    function addToList() {
+        let n = document.getElementById('iN').value, q = parseFloat(document.getElementById('iQ').value), p = parseFloat(document.getElementById('iP').value);
+        if(!n || !q || !p) return;
+        temp.push({n, q, p, t: q*p});
+        drawBill();
+        document.getElementById('iN').value=""; document.getElementById('iQ').value=""; document.getElementById('iP').value="";
+    }
+
+    function drawBill() {
+        let h = ""; let tt = 0;
+        temp.forEach((it, i) => { h += `<tr><td>${it.n}</td><td>${it.q}</td><td>${it.t}</td><td onclick="temp.splice(${i},1);drawBill()">❌</td></tr>`; tt += it.t; });
+        document.querySelector('#billTable tbody').innerHTML = h;
+        document.getElementById('totalShow').innerText = "₹" + tt;
+        document.getElementById('billArea').style.display = tt > 0 ? 'block' : 'none';
+    }
+
+    function saveBill() {
+        let name = document.getElementById('cN').value.trim();
+        if(!name) return alert("किसान का नाम?");
+        let total = temp.reduce((s, i) => s + i.t, 0);
+        DB.sls.push({ cn: name, amt: total, type: 'उधार', date: new Date().toLocaleDateString() });
+        save();
+        alert("खाते में उधार दर्ज किया गया");
+        temp = []; drawBill(); document.getElementById('cN').value="";
+    }
+
+    // --- लेजर (मुख्य हिस्सा) ---
+    function renderKhata() {
+        let users = {};
+        DB.sls.forEach(s => {
+            if(!users[s.cn]) users[s.cn] = 0;
+            // 'उधार' और 'निकासी' से बैलेंस बढ़ता है, 'जमा' से घटता है
+            if(s.type === 'उधार' || s.type === 'निकासी') users[s.cn] += s.amt;
+            else if(s.type === 'जमा') users[s.cn] -= s.amt;
+        });
+
+        let q = document.getElementById('srch').value.toLowerCase();
+        let h = "";
+        for(let n in users) {
+            if(n.toLowerCase().includes(q)) {
+                let bal = users[n];
+                h += `<div class="card" style="border-left:6px solid ${bal > 0 ? 'var(--d)' : 'var(--ok)'}">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <b>${n}</b><b style="font-size:18px;">₹${bal.toFixed(2)}</b>
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:12px;">
+                        <button class="btn btn-ok" style="flex:1" onclick="handlePay('${n}', 'जमा')">💰 जमा</button>
+                        <button class="btn btn-s" style="flex:1" onclick="handlePay('${n}', 'निकासी')">💸 नकद दें</button>
+                    </div>
+                </div>`;
+            }
+        }
+        document.getElementById('khataList').innerHTML = h || "कोई खाता नहीं";
+    }
+
+    function handlePay(name, type) {
+        let val = prompt(`${name} के लिए ${type} राशि:`);
+        if(val && !isNaN(val)) {
+            DB.sls.push({ cn: name, amt: parseFloat(val), type: type, date: new Date().toLocaleDateString() });
+            save();
+            renderKhata(); // तुरंत बैलेंस अपडेट होगा
+            if(type === 'जमा') showQR(val);
+        }
+    }
+
+    function showQR(amt) {
+        document.getElementById('qrOverlay').style.display = 'flex';
+        document.getElementById('qrAmt').innerText = "₹" + amt;
+        let link = `upi://pay?pa=${DB.cfg.upi}&pn=${encodeURIComponent(DB.cfg.n)}&am=${amt}&cu=INR`;
+        document.getElementById('qrPlace').innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(link)}">`;
+    }
+
+    function closeQR() { document.getElementById('qrOverlay').style.display = 'none'; }
+    function saveSet() { DB.cfg.n = document.getElementById('sBiz').value; DB.cfg.upi = document.getElementById('sUpi').value; save(); alert("अपडेट हुआ!"); }
+    window.onload = () => { save(); document.getElementById('sBiz').value = DB.cfg.n; document.getElementById('sUpi').value = DB.cfg.upi; };
+</script>
+</body>
+</html>
