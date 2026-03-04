@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>अयांश कृषि मुनीम | V33 Final</title>
+    <style>
+        :root { --p: #1b5e20; --s: #ff8f00; --d: #b71c1c; --w: #ffffff; --g: #f0f4f0; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--g); margin: 0; padding-bottom: 80px; }
+        
+        #passScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--p); z-index: 5000; display: flex; align-items: center; justify-content: center; }
+        .pass-box { background: white; padding: 30px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .pass-input-row { position: relative; margin: 20px 0; }
+        #passInp { width: 100%; padding: 15px; font-size: 22px; text-align: center; border: 2px solid #ddd; border-radius: 10px; letter-spacing: 4px; }
+        .eye-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); cursor: pointer; font-size: 20px; }
+
+        .header { background: var(--p); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 1000; }
+        .page { display: none; padding: 10px; max-width: 600px; margin: auto; }
+        .page-active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .card { background: var(--w); padding: 15px; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 12px; border: 1px solid #eee; }
+        h3 { margin-top: 0; color: var(--p); border-bottom: 2px solid #f0f0f0; padding-bottom: 8px; font-size: 16px; margin-bottom: 12px; }
+        
+        label { font-size: 11px; font-weight: bold; color: #666; display: block; margin-top: 10px; }
+        input { width: 100%; padding: 12px; margin-top: 5px; border: 1.5px solid #ccc; border-radius: 10px; font-size: 15px; box-sizing: border-box; outline: none; }
+        .btn { border: none; padding: 14px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; font-size: 15px; }
+        .btn-p { background: var(--p); color: white; }
+        .btn-s { background: var(--s); color: white; }
+        .btn-wa { background: #25D366; color: white; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        th, td { border: 1px solid #eee; padding: 10px; text-align: left; }
+        th { background: #f9f9f9; color: var(--p); }
+        
+        .nav-bar { display: flex; background: white; position: fixed; bottom: 0; width: 100%; height: 70px; border-top: 1px solid #ddd; z-index: 1000; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-size: 11px; cursor: pointer; }
+        .nav-active { color: var(--p); font-weight: bold; border-top: 4px solid var(--p); background: #f1f8f1; }
+        .total-box { text-align: right; padding: 15px; background: #e8f5e9; border-radius: 10px; margin-top: 10px; border: 1px solid var(--p); }
+    </style>
+</head>
+<body>
+
+<div id="passScreen">
+    <div class="pass-box">
+        <h2 style="margin:0; color:var(--p);">अयांश इंटरप्राइजेज</h2>
+        <p style="color:#666; font-size:12px;">पासवर्ड: 1234</p>
+        <div class="pass-input-row">
+            <input type="password" id="passInp" maxlength="4" placeholder="पासवर्ड">
+            <span class="eye-btn" onclick="togglePass()">👁️</span>
+        </div>
+        <button class="btn btn-p" onclick="checkLogin()">लॉगिन</button>
+    </div>
+</div>
+
+<div id="appBody" style="display:none;">
+    <div class="header">
+        <h2 id="stTitle" style="margin:0; font-size:18px;">अयांश इंटरप्राइजेज</h2>
+        <div id="liveDate" style="font-size:10px; opacity:0.8;"></div>
+    </div>
+
+    <div id="p-main" class="page page-active">
+        <div class="card">
+            <h3>👤 किसान जानकारी</h3>
+            <input type="text" id="cN" placeholder="किसान का नाम">
+            <input type="number" id="cM" placeholder="मोबाइल नंबर (WhatsApp)">
+        </div>
+
+        <div class="card" style="border: 2px solid var(--s);">
+            <h3>🛒 सामान एंट्री</h3>
+            <input type="text" id="iN" placeholder="सामान का नाम" list="stockList">
+            <datalist id="stockList"></datalist>
+            <div style="display:flex; gap:10px;">
+                <input type="number" id="iP" placeholder="दर (₹)">
+                <input type="number" id="iQ" placeholder="मात्रा">
+            </div>
+            <button class="btn btn-p" onclick="addToList()">➕ बिल में जोड़ें</button>
+        </div>
+
+        <div class="card">
+            <table id="billTable">
+                <thead><tr><th>सामान</th><th>मात्रा</th><th>दर</th><th>कुल</th><th>❌</th></tr></thead>
+                <tbody></tbody>
+            </table>
+            <div class="total-box">
+                <b>कुल इकट्ठा (Total):</b>
+                <span id="finalTotal" style="font-size:20px; color:var(--p); font-weight:bold; margin-left:10px;">₹0</span>
+            </div>
+            <button class="btn btn-s" id="saveBtn" style="display:none; margin-top:20px;" onclick="saveBill()">💾 खाता सुरक्षित करें</button>
+        </div>
+    </div>
+
+    <div id="p-stock" class="page">
+        <div class="card">
+            <h3>📦 नया स्टॉक</h3>
+            <input type="text" id="sN" placeholder="सामान नाम">
+            <input type="number" id="sP" placeholder="दर (₹)">
+            <button class="btn btn-p" onclick="saveStock()">स्टॉक में जोड़ें</button>
+        </div>
+        <div class="card">
+            <table id="stockTable">
+                <thead><tr><th>नाम</th><th>दर</th><th>❌</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="p-khata" class="page">
+        <div class="card">
+            <h3>📜 उधार खाता</h3>
+            <input type="text" id="srch" placeholder="किसान खोजें..." onkeyup="renderKhata()">
+            <div id="khataList" style="margin-top:15px;"></div>
+        </div>
+    </div>
+
+    <div id="p-set" class="page">
+        <div class="card">
+            <h3>⚙️ दुकान सेटिंग</h3>
+            <label>दुकान का नाम:</label><input type="text" id="cfgN">
+            <label>दुकान का मोबाइल:</label><input type="text" id="cfgM">
+            <button class="btn btn-p" onclick="saveCfg()">सेव करें</button>
+        </div>
+        <button class="btn btn-s" style="background:#0288d1;" onclick="shareMe()">🔗 ऐप शेयर करें</button>
+    </div>
+
+    <nav class="nav-bar">
+        <div class="nav-item nav-active" onclick="tab('main', this)">🛒<span>बिल</span></div>
+        <div class="nav-item" onclick="tab('stock', this)">📦<span>स्टॉक</span></div>
+        <div class="nav-item" onclick="tab('khata', this)">📜<span>खाता</span></div>
+        <div class="nav-item" onclick="tab('set', this)">⚙️<span>सेटिंग</span></div>
+    </nav>
+</div>
+
+<div id="modal" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:6000; display:none; align-items:center; justify-content:center; color:white; text-align:center;">
+    <div style="background:white; color:#333; padding:30px; border-radius:25px; width:80%;">
+        <div style="font-size:40px;">✅</div>
+        <h2>हिसाब जुड़ गया!</h2>
+        <h1 id="mTotal" style="color:var(--s); font-size:40px; margin:10px 0;">₹0</h1>
+        <button class="btn btn-wa" onclick="sendWA()">💬 WhatsApp भेजें</button>
+        <button class="btn btn-p" style="margin-top:10px;" onclick="location.reload()">नया ग्राहक</button>
+    </div>
+</div>
+
+<script>
+    let DATA = {
+        cfg: JSON.parse(localStorage.getItem('ay_v33_cfg') || '{"n":"अयांश इंटरप्राइजेज","m":"9074118585"}'),
+        stk: JSON.parse(localStorage.getItem('ay_v33_stk') || '[]'),
+        sls: JSON.parse(localStorage.getItem('ay_v33_sls') || '[]')
+    };
+
+    let tempBill = [];
+
+    function togglePass() {
+        let x = document.getElementById("passInp");
+        x.type = x.type === "password" ? "text" : "password";
+    }
+    function checkLogin() {
+        if(document.getElementById('passInp').value === "1234") {
+            document.getElementById('passScreen').style.display = 'none';
+            document.getElementById('appBody').style.display = 'block';
+            startApp();
+        } else { alert("गलत पासवर्ड!"); }
+    }
+
+    function startApp() {
+        document.getElementById('stTitle').innerText = DATA.cfg.n;
+        document.getElementById('cfgN').value = DATA.cfg.n;
+        document.getElementById('cfgM').value = DATA.cfg.m;
+        document.getElementById('liveDate').innerText = new Date().toLocaleDateString('hi-IN', {weekday:'long', day:'numeric', month:'long'});
+        updateStkUI();
+    }
+
+    function tab(t, el) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('page-active'));
+        document.getElementById('p-' + t).classList.add('page-active');
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('nav-active'));
+        el.classList.add('nav-active');
+        if(t === 'khata') renderKhata();
+    }
+
+    function addToList() {
+        let n = document.getElementById('iN').value.trim();
+        let p = parseFloat(document.getElementById('iP').value);
+        let q = parseFloat(document.getElementById('iQ').value);
+        if(!n || isNaN(p) || isNaN(q)) return alert("सब भरें!");
+        tempBill.push({ n, p, q, t: p * q });
+        renderBill();
+        document.getElementById('iN').value=""; document.getElementById('iP').value=""; document.getElementById('iQ').value="";
+        document.getElementById('iN').focus();
+    }
+
+    function renderBill() {
+        let h = ""; let total = 0;
+        tempBill.forEach((item, i) => {
+            h += `<tr><td>${item.n}</td><td>${item.q}</td><td>${item.p}</td><td>${item.t}</td><td><button onclick="tempBill.splice(${i},1);renderBill()">×</button></td></tr>`;
+            total += item.t;
+        });
+        document.querySelector('#billTable tbody').innerHTML = h;
+        document.getElementById('finalTotal').innerText = "₹" + total;
+        document.getElementById('saveBtn').style.display = total > 0 ? 'block' : 'none';
+    }
+
+    function saveBill() {
+        let cn = document.getElementById('cN').value || "किसान भाई";
+        let cm = document.getElementById('cM').value || "000";
+        let tt = tempBill.reduce((s, i) => s + i.t, 0);
+        DATA.sls.unshift({ cn, cm, tt, items: [...tempBill], d: new Date().toLocaleDateString('hi-IN') });
+        localStorage.setItem('ay_v33_sls', JSON.stringify(DATA.sls));
+        document.getElementById('modal').style.display = 'flex';
+        document.getElementById('mTotal').innerText = "₹" + tt;
+    }
+
+    function sendWA() {
+        let s = DATA.sls[0];
+        let list = s.items.map(i => `• ${i.n}: ${i.q}x${i.p}=₹${i.t}`).join('\n');
+        let msg = `*🌾 ${DATA.cfg.n} 🌾*\n--------------------\nकिसान: ${s.cn}\nदिनांक: ${s.d}\n--------------------\nहिसाब विवरण:\n${list}\n--------------------\n*कुल बकाया: ₹${s.tt}*\n--------------------\nधन्यवाद! 🙏`;
+        window.open(`https://wa.me/91${s.cm}?text=${encodeURIComponent(msg)}`);
+    }
+
+    function saveStock() {
+        let n = document.getElementById('sN').value;
+        let p = document.getElementById('sP').value;
+        if(!n || !p) return;
+        DATA.stk.push({ n, p });
+        localStorage.setItem('ay_v33_stk', JSON.stringify(DATA.stk));
+        updateStkUI();
+        document.getElementById('sN').value=""; document.getElementById('sP').value="";
+    }
+    function updateStkUI() {
+        let h = ""; let dl = "";
+        DATA.stk.forEach((item, i) => {
+            h += `<tr><td>${item.n}</td><td>${item.p}</td><td><button onclick="DATA.stk.splice(${i},1);updateStkUI()">❌</button></td></tr>`;
+            dl += `<option value="${item.n}">`;
+        });
+        document.querySelector('#stockTable tbody').innerHTML = h;
+        document.getElementById('stockList').innerHTML = dl;
+    }
+
+    function renderKhata() {
+        let q = document.getElementById('srch').value.toLowerCase();
+        let sums = {};
+        DATA.sls.forEach(s => sums[s.cn] = (sums[s.cn] || 0) + s.tt);
+        let h = "";
+        Object.keys(sums).filter(n => n.toLowerCase().includes(q)).forEach(n => {
+            h += `<div style="background:white; padding:15px; border-radius:12px; margin-bottom:10px; border-left:6px solid var(--d); display:flex; justify-content:space-between; align-items:center;">
+                <b>${n}</b><b style="color:var(--d);">₹${sums[n]}</b>
+            </div>`;
+        });
+        document.getElementById('khataList').innerHTML = h || "कोई हिसाब नहीं।";
+    }
+
+    function saveCfg() {
+        DATA.cfg.n = document.getElementById('cfgN').value;
+        DATA.cfg.m = document.getElementById('cfgM').value;
+        localStorage.setItem('ay_v33_cfg', JSON.stringify(DATA.cfg));
+        alert("सुरक्षित!"); location.reload();
+    }
+
+    function shareMe() {
+        if(navigator.share) navigator.share({title:'अयांश मुनीम', url: window.location.href});
+    }
+</script>
+</body>
+</html>
