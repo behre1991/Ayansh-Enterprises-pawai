@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Shop Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .card { border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .btn-primary { background-color: #25d366; border: none; } /* WhatsApp Color */
+    </style>
+</head>
+<body>
+<div class="container mt-4">
+    <h2 class="text-center mb-4">🏪 {{ data.config.shop_name }} - मैनेजमेंट</h2>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card p-4">
+                <h4>🆕 नया बिल (WhatsApp भेजेगा)</h4>
+                <form action="/add_sale" method="POST">
+                    <input type="text" name="customer" class="form-control mb-2" placeholder="ग्राहक का नाम" required>
+                    <input type="text" name="phone" class="form-control mb-2" placeholder="WhatsApp नंबर (10 अंक)" required>
+                    <input type="text" name="item" class="form-control mb-2" placeholder="आइटम का नाम" required>
+                    <input type="number" name="qty" class="form-control mb-2" placeholder="मात्रा (Qty)" required>
+                    <input type="number" name="price" class="form-control mb-2" placeholder="रेट (Price)" required>
+                    <button type="submit" class="btn btn-primary w-100">बिल बनाएं और WhatsApp भेजें</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card p-4">
+                <h4>⚙️ दुकान की सेटिंग</h4>
+                <form action="/settings" method="POST">
+                    <label>दुकान का नाम:</label>
+                    <input type="text" name="shop_name" class="form-control mb-2" value="{{ data.config.shop_name }}">
+                    <label>GST नंबर:</label>
+                    <input type="text" name="gst" class="form-control mb-2" value="{{ data.config.gst }}">
+                    <label>अपना मोबाइल नंबर:</label>
+                    <input type="text" name="phone" class="form-control mb-2" value="{{ data.config.phone }}">
+                    <button type="submit" class="btn btn-dark w-100">सेटिंग सेव करें</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="card p-4">
+        <h4>📊 बिक्री लेजर (Recent Sales)</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>नाम</th>
+                    <th>आइटम</th>
+                    <th>कुल राशि</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in data.sales[-5:] %}
+                <tr>
+                    <td>{{ sale.customer }}</td>
+                    <td>{{ sale.item }}</td>
+                    <td>₹{{ sale.total }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</body>
+</html>
