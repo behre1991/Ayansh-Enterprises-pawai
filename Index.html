@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>अयांश मुनीम मास्टर | V51 (Stock Update)</title>
+    <style>
+        :root { --p: #003399; --s: #ff6600; --d: #cc0000; --ok: #008000; --g: #f2f2f2; --w: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--g); margin: 0; padding-bottom: 80px; }
+        .header { background: var(--p); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 1000; }
+        .page { display: none; padding: 12px; max-width: 500px; margin: auto; animation: fadeIn 0.2s; }
+        .page-active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .card { background: var(--w); padding: 15px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 12px; }
+        h3 { margin: 0 0 10px 0; color: var(--p); font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1.5px solid #ccc; border-radius: 10px; box-sizing: border-box; font-size: 16px; }
+        .btn { border: none; padding: 14px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+        .btn-p { background: var(--p); color: white; }
+        .btn-s { background: var(--s); color: white; }
+        .btn-ok { background: var(--ok); color: white; }
+        .nav-bar { display: flex; background: white; position: fixed; bottom: 0; width: 100%; height: 75px; border-top: 1px solid #ddd; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; color: #666; cursor: pointer; }
+        .nav-active { color: var(--p); font-weight: bold; background: #f0f4ff; border-top: 4px solid var(--p); }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { border-bottom: 1px solid #eee; padding: 10px 5px; text-align: left; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h2 id="dispBiz" style="margin:0; font-size:18px;">लोडिंग...</h2>
+</div>
+
+<div id="p-bill" class="page page-active">
+    <div class="card">
+        <h3>👤 नया बिल</h3>
+        <input type="text" id="cN" placeholder="किसान का नाम">
+        <input type="text" id="iN" placeholder="सामान का नाम" list="stkData" oninput="autoRate(this.value)">
+        <datalist id="stkData"></datalist>
+        <div style="display:flex; gap:10px;">
+            <input type="number" id="iQ" placeholder="मात्रा (Qty)">
+            <input type="number" id="iP" placeholder="रेट ₹">
+        </div>
+        <button class="btn btn-p" onclick="addToList()">➕ लिस्ट में जोड़ें</button>
+    </div>
+    <div id="billArea" class="card" style="display:none;">
+        <table id="billTable">
+            <thead><tr><th>आइटम</th><th>QTY</th><th>₹</th><th></th></tr></thead>
+            <tbody></tbody>
+        </table>
+        <h2 id="totalShow" style="text-align:right; color:var(--d); margin:10px 0;">₹0</h2>
+        <button class="btn btn-ok" onclick="saveBill()">💾 बिल पक्का करें (उधार)</button>
+    </div>
+</div>
+
+<div id="p-stk" class="page">
+    <div class="card">
+        <h3>📦 स्टॉक / रेट लिस्ट</h3>
+        <input type="text" id="sName" placeholder="सामान का नाम">
+        <input type="number" id="sRate" placeholder="बिक्री रेट ₹">
+        <button class="btn btn-s" onclick="addStk()">✅ स्टॉक में जोड़ें</button>
+    </div>
+    <div id="stkTableList" class="card"></div>
+</div>
+
+<div id="p-khata" class="page">
+    <div class="card">
+        <h3>📜 किसान लेजर</h3>
+        <input type="text" id="srch" placeholder="नाम से खोजें..." onkeyup="renderKhata()">
+        <div id="khataList"></div>
+    </div>
+</div>
+
+<div id="p-set" class="page">
+    <div class="card">
+        <h3>⚙️ सेटिंग</h3>
+        <label>दुकान का नाम</label><input type="text" id="sBiz">
+        <label>UPI ID</label><input type="text" id="sUpi">
+        <button class="btn btn-ok" onclick="saveSet()">अपडेट करें</button>
+        <br>
+        <button class="btn" style="background:#eee; color:red" onclick="if(confirm('सब डिलीट?')) {localStorage.clear(); location.reload();}">🧹 सारा डेटा साफ करें</button>
+    </div>
+</div>
+
+<nav class="nav-bar">
+    <div class="nav-item nav-active" onclick="tab('bill', this)">🛒<span>बिक्री</span></div>
+    <div class="nav-item" onclick="tab('stk', this)">📦<span>स्टॉक</span></div>
+    <div class="nav-item" onclick="tab('khata', this)">📜<span>खाता</span></div>
+    <div class="nav-item" onclick="tab('set', this)">⚙️<span>सेटिंग</span></div>
+</nav>
+
+<script>
+    let DB = JSON.parse(localStorage.getItem('ay_v51')) || { 
+        sls: [], 
+        stk: [], 
+        cfg: {n:"अयांश इंटरप्राइजेज", upi:"your@upi"} 
+    };
+    let tempBill = [];
+
+    function save() { 
+        localStorage.setItem('ay_v51', JSON.stringify(DB)); 
+        document.getElementById('dispBiz').innerText = DB.cfg.n;
+        updateDatalist();
+    }
+
+    function tab(p, el) {
+        document.querySelectorAll('.page').forEach(x => x.classList.remove('page-active'));
+        document.getElementById('p-'+p).classList.add('page-active');
+        document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('nav-active'));
+        el.classList.add('nav-active');
+        if(p === 'khata') renderKhata();
+        if(p === 'stk') renderStk();
+    }
+
+    // --- स्टॉक मैनेजमेंट ---
+    function addStk() {
+        let n = document.getElementById('sName').value.trim(), r = parseFloat(document.getElementById('sRate').value);
+        if(!n || !r) return alert("नाम और रेट भरें");
+        DB.stk = DB.stk.filter(x => x.n !== n); // Duplicate हटाएँ
+        DB.stk.push({n, r});
+        save();
+        document.getElementById('sName').value=""; document.getElementById('sRate').value="";
+        renderStk();
+    }
+
+    function renderStk() {
+        let h = "<table><tr><th>नाम</th><th>रेट</th><th>-</th></tr>";
+        DB.stk.forEach((s, i) => {
+            h += `<tr><td>${s.n}</td><td>₹${s.r}</td><td onclick="deleteStk(${i})">❌</td></tr>`;
+        });
+        document.getElementById('stkTableList').innerHTML = h + "</table>";
+    }
+
+    function deleteStk(i) { DB.stk.splice(i, 1); save(); renderStk(); }
+
+    function updateDatalist() {
+        let h = "";
+        DB.stk.forEach(s => h += `<option value="${s.n}">`);
+        document.getElementById('stkData').innerHTML = h;
+    }
+
+    function autoRate(val) {
+        let item = DB.stk.find(x => x.n === val);
+        if(item) document.getElementById('iP').value = item.r;
+    }
+
+    // --- बिलिंग ---
+    function addToList() {
+        let n = document.getElementById('iN').value, q = parseFloat(document.getElementById('iQ').value), p = parseFloat(document.getElementById('iP').value);
+        if(!n || !q || !p) return alert("पूरी जानकारी भरें");
+        tempBill.push({n, q, p, t: q*p});
+        drawBill();
+        document.getElementById('iN').value=""; document.getElementById('iQ').value=""; document.getElementById('iP').value="";
+    }
+
+    function drawBill() {
+        let h = ""; let tt = 0;
+        tempBill.forEach((it, i) => { 
+            h += `<tr><td>${it.n}</td><td>${it.q}</td><td>${it.t}</td><td onclick="tempBill.splice(${i},1);drawBill()">❌</td></tr>`; 
+            tt += it.t; 
+        });
+        document.querySelector('#billTable tbody').innerHTML = h;
+        document.getElementById('totalShow').innerText = "₹" + tt;
+        document.getElementById('billArea').style.display = tt > 0 ? 'block' : 'none';
+    }
+
+    function saveBill() {
+        let name = document.getElementById('cN').value.trim();
+        if(!name || tempBill.length === 0) return alert("किसान का नाम और सामान जरूरी है");
+        let total = tempBill.reduce((s, i) => s + i.t, 0);
+        DB.sls.push({ cn: name, amt: total, type: 'उधार', date: new Date().toLocaleString('hi-IN') });
+        save();
+        alert("सफलतापूर्वक खाते में दर्ज!");
+        tempBill = []; drawBill(); document.getElementById('cN').value="";
+    }
+
+    // --- लेजर ---
+    function renderKhata() {
+        let users = {};
+        DB.sls.forEach(s => {
+            if(!users[s.cn]) users[s.cn] = 0;
+            if(s.type === 'उधार' || s.type === 'निकासी') users[s.cn] += s.amt;
+            else if(s.type === 'जमा') users[s.cn] -= s.amt;
+        });
+        let q = document.getElementById('srch').value.toLowerCase();
+        let h = "";
+        for(let n in users) {
+            if(n.toLowerCase().includes(q)) {
+                let bal = users[n];
+                h += `<div class="card" style="border-left:6px solid ${bal > 0 ? 'var(--d)' : 'var(--ok)'}">
+                    <div style="display:flex; justify-content:space-between;"><b>${n}</b><b>₹${bal.toFixed(2)}</b></div>
+                    <div style="display:flex; gap:5px; margin-top:10px;">
+                        <button class="btn btn-ok" onclick="pay('${n}', 'जमा')">जमा</button>
+                        <button class="btn btn-s" onclick="pay('${n}', 'निकासी')">नकद दें</button>
+                    </div>
+                </div>`;
+            }
+        }
+        document.getElementById('khataList').innerHTML = h || "कोई रिकॉर्ड नहीं";
+    }
+
+    function pay(n, t) {
+        let a = prompt(`${n} के लिए राशि:`);
+        if(a && !isNaN(a)) {
+            DB.sls.push({ cn: n, amt: parseFloat(a), type: t, date: new Date().toLocaleString('hi-IN') });
+            save(); renderKhata();
+        }
+    }
+
+    function saveSet() { DB.cfg.n = document.getElementById('sBiz').value; DB.cfg.upi = document.getElementById('sUpi').value; save(); alert("सेटिंग सेव हुई"); }
+
+    window.onload = () => { 
+        save(); 
+        document.getElementById('sBiz').value = DB.cfg.n; 
+        document.getElementById('sUpi').value = DB.cfg.upi; 
+    };
+</script>
+</body>
+</html>
