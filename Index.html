@@ -1,0 +1,100 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, Alert, ScrollView } from 'react-native';
+
+export default function MyDukanApp() {
+  // दुकान की सेटिंग्स (बदलने योग्य)
+  const [shopName, setShopName] = useState("कुमार एग्रो एजेंसी");
+  const [gstNum, setGstNum] = useState("22AAAAA0000A1Z5");
+
+  // स्टॉक और बिलिंग डेटा
+  const [stock, setStock] = useState([{ id: '1', name: 'डीएपी खाद', price: 1350, qty: 50 }]);
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [billItems, setBillItems] = useState([]);
+  const [totalBill, setTotalBill] = useState(0);
+  const [amountPaid, setAmountPaid] = useState(0);
+
+  // 1. बिल में सामान जोड़ना और स्टॉक चेक करना
+  const addItemToBill = (itemName, price, buyQty) => {
+    const product = stock.find(item => item.name === itemName);
+    if (product && product.qty < buyQty) {
+      Alert.alert("स्टॉक कम है!", `उपलब्ध: ${product.qty}`);
+      return;
+    }
+    
+    const newItem = { name: itemName, price: price, qty: buyQty, total: price * buyQty };
+    setBillItems([...billItems, newItem]);
+    setTotalBill(totalBill + newItem.total);
+  };
+
+  // 2. बिल फाइनल करना और SMS का मैसेज तैयार करना
+  const finalizeBill = () => {
+    const udhari = totalBill - amountPaid;
+    const message = `दुकान: ${shopName}\nकुल बिल: ₹${totalBill}\nजमा: ₹${amountPaid}\nशेष उधार: ₹${udhari}\nदिनांक: ${new_Date().toLocaleDateString()}`;
+    
+    Alert.alert("बिल तैयार है", message);
+    // यहाँ SMS Gateway API जोड़ी जा सकती है
+    console.log("SMS भेजा जा रहा है: ", message);
+  };
+
+  return (
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>{shopName}</Text>
+        <Text>GST: {gstNum}</Text>
+      </View>
+
+      {/* ग्राहक एंट्री */}
+      <View style={styles.section}>
+        <TextInput 
+          placeholder="ग्राहक मोबाइल नंबर" 
+          keyboardType="numeric"
+          style={styles.input}
+          onChangeText={setCustomerPhone}
+        />
+      </View>
+
+      {/* बिलिंग सेक्शन */}
+      <View style={styles.section}>
+        <Text style={styles.title}>सामान जोड़ें (Billing)</Text>
+        <Button title="डीएपी खाद जोड़ें (1 बोरी)" onPress={() => addItemToBill('डीएपी खाद', 1350, 1)} />
+        
+        <FlatList
+          data={billItems}
+          renderItem={({ item }) => (
+            <Text>{item.name} - {item.qty} x {item.price} = ₹{item.total}</Text>
+          )}
+          keyExtractor={(item, index) => index.toString()}
+        />
+      </View>
+
+      {/* भुगतान और उधार */}
+      <View style={styles.section}>
+        <Text style={{fontWeight: 'bold'}}>कुल बिल: ₹{totalBill}</Text>
+        <TextInput 
+          placeholder="ग्राहक ने कितने पैसे दिए?" 
+          keyboardType="numeric"
+          style={styles.input}
+          onChangeText={(val) => setAmountPaid(Number(val))}
+        />
+        <Text style={{color: 'red'}}>शेष उधारी: ₹{totalBill - amountPaid}</Text>
+        <Button title="बिल सेव करें और SMS भेजें" color="green" onPress={finalizeBill} />
+      </View>
+
+      {/* सेटिंग्स - यहाँ से नाम बदलें */}
+      <View style={styles.settings}>
+        <TextInput placeholder="दुकान का नाम बदलें" onChangeText={setShopName} style={styles.input} />
+        <TextInput placeholder="GST बदलें" onChangeText={setGstNum} style={styles.input} />
+      </View>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  header: { alignItems: 'center', marginBottom: 20, padding: 10, backgroundColor: '#e3f2fd' },
+  headerText: { fontSize: 22, fontWeight: 'bold' },
+  section: { marginBottom: 30, borderBottomWidth: 1, borderColor: '#ccc', paddingBottom: 10 },
+  title: { fontSize: 18, marginBottom: 10 },
+  input: { borderWidth: 1, borderColor: '#ddd', padding: 8, marginVertical: 5, borderRadius: 5 },
+  settings: { marginTop: 50, padding: 10, backgroundColor: '#f9f9f9' }
+});
