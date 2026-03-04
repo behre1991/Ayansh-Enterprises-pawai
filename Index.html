@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ayansh Enterprises Pro | Pawai</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        :root { --p: #002b5e; --s: #1b5e20; --d: #b71c1c; --w: #ffffff; --g: #f0f2f5; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--g); margin: 0; color: #1c1e21; -webkit-tap-highlight-color: transparent; }
+        
+        /* Layout */
+        .page { display: none; padding: 12px; max-width: 600px; margin: 0 auto 80px auto; }
+        .page-active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .header { background: var(--p); color: white; padding: 16px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+        .card { background: var(--w); padding: 16px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #e4e6eb; }
+        
+        /* Elements */
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ced4da; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        .btn { border: none; padding: 14px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-p { background: var(--p); color: white; }
+        .btn-s { background: var(--s); color: white; }
+        .btn-d { background: white; color: var(--d); border: 1px solid var(--d); }
+
+        /* Navigation */
+        .nav-bar { display: flex; background: white; position: fixed; bottom: 0; width: 100%; border-top: 1px solid #ddd; height: 65px; z-index: 1000; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #65676b; cursor: pointer; font-size: 11px; }
+        .nav-active { color: var(--p); border-top: 3px solid var(--p); background: #f0f4f8; font-weight: bold; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 5px; }
+        th, td { padding: 10px 5px; border-bottom: 1px solid #eee; text-align: left; font-size: 14px; }
+        th { color: var(--p); font-weight: bold; border-bottom: 2px solid #eee; }
+
+        /* Modal */
+        #modalOverlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; display:none; align-items:center; justify-content:center; }
+        .modal-box { background:white; padding:20px; border-radius:15px; width:85%; max-width:350px; text-align:center; }
+        
+        #loginPage { position:fixed; top:0; left:0; width:100%; height:100%; background:var(--p); z-index:11000; display:flex; align-items:center; justify-content:center; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div id="loginPage">
+    <div class="card" style="width:280px; text-align:center;">
+        <h2 id="lTitle">अयांश इंटरप्राइजेज</h2>
+        <input type="password" id="passCode" placeholder="पासवर्ड (1234)">
+        <button class="btn btn-p" onclick="checkLogin()">लॉगिन</button>
+    </div>
+</div>
+
+<div id="mainApp" style="display:none;">
+    <div class="header">
+        <h2 id="hTitle" style="margin:0;">Ayansh Enterprises</h2>
+        <div id="topSale" style="font-size: 11px; margin-top: 4px; color: #a5d6a7;">आज की बिक्री: ₹0</div>
+    </div>
+
+    <div id="p-billing" class="page page-active">
+        <div class="card">
+            <h3>🧾 बिलिंग</h3>
+            <select id="selProduct" onchange="productTrigger()">
+                <option value="">-- सामान चुनें --</option>
+                <option value="NEW">+ नया सामान (Unlisted)</option>
+            </select>
+            
+            <div id="newInputArea" class="hidden">
+                <input type="text" id="customItemName" placeholder="नाम और वजन (उदा: नमक 1kg)">
+            </div>
+
+            <div style="display:flex; gap:8px;">
+                <input type="number" id="bQty" placeholder="मात्रा" inputmode="numeric">
+                <input type="number" id="bRate" placeholder="रेट (₹)" inputmode="decimal">
+            </div>
+            <button class="btn btn-s" onclick="addToList()">+ लिस्ट में जोड़ें</button>
+        </div>
+
+        <div id="listCard" class="card hidden">
+            <table>
+                <thead><tr><th>सामान</th><th>Qty</th><th>कुल</th><th></th></tr></thead>
+                <tbody id="listRows"></tbody>
+            </table>
+            <div style="text-align:right; border-top:1px solid #ddd; padding-top:10px; margin-top:10px;">
+                <h2 id="grandTotal" style="margin:0; color:var(--p);">₹0</h2>
+            </div>
+            <input type="text" id="custName" placeholder="ग्राहक का नाम" style="margin-top:10px;">
+            <button class="btn btn-p" style="margin-top:10px;" onclick="finalizeBill()">⚡ बिल प्रिंट करें</button>
+        </div>
+    </div>
+
+    <div id="p-stock" class="page">
+        <div class="card">
+            <h3>📦 स्टॉक एंट्री</h3>
+            <input type="text" id="sName" placeholder="सामान का नाम">
+            <input type="text" id="sWeight" placeholder="वजन/साइज (उदा: 5kg, 1L)">
+            <input type="number" id="sRate" placeholder="बिक्री रेट (₹)">
+            <input type="number" id="sQty" placeholder="मात्रा">
+            <button class="btn btn-p" onclick="updateStock()">स्टॉक में जोड़ें</button>
+        </div>
+        <div class="card" style="overflow-x: auto;">
+            <h3>मौजूदा स्टॉक</h3>
+            <table id="stockTable">
+                <thead><tr><th>नाम</th><th>वजन</th><th>रेट</th><th>Qty</th><th></th></tr></thead>
+                <tbody id="stockBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="p-history" class="page">
+        <div class="card">
+            <h3>📜 बिक्री इतिहास</h3>
+            <div id="historyList"></div>
+        </div>
+    </div>
+
+    <div id="p-settings" class="page">
+        <div class="card">
+            <h3>⚙️ सेटिंग्स</h3>
+            <input type="text" id="setStore" placeholder="दुकान का नाम">
+            <input type="text" id="setUpi" placeholder="UPI ID (भुगतान के लिए)">
+            <button class="btn btn-s" onclick="saveSettings()">अपडेट करें</button>
+        </div>
+        <div class="card">
+            <button class="btn btn-p" onclick="exportData()">Export Backup</button>
+            <button class="btn btn-d" style="margin-top:10px;" onclick="resetApp()">🚨 ऐप रीसेट करें</button>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item nav-active" onclick="showPage('billing')">🧾<span>बिलिंग</span></div>
+        <div class="nav-item" onclick="showPage('stock')">📦<span>स्टॉक</span></div>
+        <div class="nav-item" onclick="showPage('history')">📜<span>इतिहास</span></div>
+        <div class="nav-item" onclick="showPage('settings')">⚙️<span>सेटिंग</span></div>
+    </div>
+</div>
+
+<div id="modalOverlay">
+    <div class="modal-box">
+        <div style="font-size:40px; color:var(--s);">✅</div>
+        <h1 id="modalTotal" style="margin:10px 0;">₹0</h1>
+        <div id="qrCode" style="margin:10px auto;"></div>
+        <button class="btn btn-p" onclick="printPDF()">🖨️ रसीद डाउनलोड करें</button>
+        <button class="btn btn-s" style="margin-top:10px;" onclick="closeModal()">नया बिल</button>
+    </div>
+</div>
+
+<script>
+    // System Database (V4 Stable)
+    let APP_DB = {
+        cfg: JSON.parse(localStorage.getItem('ay_cfg_v4') || '{"name":"अयांश इंटरप्राइजेज","upi":"SBIBHIM.INSTANT73331772586360110@sbipay"}'),
+        stock: JSON.parse(localStorage.getItem('ay_stk_v4') || '[]'),
+        sales: JSON.parse(localStorage.getItem('ay_sls_v4') || '[]')
+    };
+    let currentCart = [];
+
+    // Security Check
+    function checkLogin() {
+        if(document.getElementById('passCode').value === "1234") {
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            syncSystem();
+        } else { alert("गलत पासवर्ड!"); }
+    }
+
+    function syncSystem() {
+        document.getElementById('hTitle').innerText = APP_DB.cfg.name;
+        document.getElementById('setStore').value = APP_DB.cfg.name;
+        document.getElementById('setUpi').value = APP_DB.cfg.upi;
+        refreshStock();
+        refreshHistory();
+        updateDailyTotal();
+    }
+
+    // Navigation
+    function showPage(p) {
+        document.querySelectorAll('.page').forEach(pg => pg.classList.remove('page-active'));
+        document.getElementById('p-' + p).classList.add('page-active');
+        document.querySelectorAll('.nav-item').forEach(ni => ni.classList.remove('nav-active'));
+        event.currentTarget.classList.add('nav-active');
+    }
+
+    // Stock Management (Multi-variant logic)
+    function updateStock() {
+        const n = document.getElementById('sName').value.trim();
+        const w = document.getElementById('sWeight').value.trim() || "-";
+        const r = parseFloat(document.getElementById('sRate').value);
+        const q = parseInt(document.getElementById('sQty').value || 0);
+
+        if(!n || isNaN(r)) return alert("नाम और रेट भरें!");
+
+        // Normalized UID to prevent duplication (lowercase and space removed)
+        const uid = (n + "_" + w).toLowerCase().replace(/\s/g, '');
+        let idx = APP_DB.stock.findIndex(i => i.uid === uid);
+
+        if(idx > -1) {
+            APP_DB.stock[idx].rate = r;
+            APP_DB.stock[idx].qty += q;
+        } else {
+            APP_DB.stock.push({ uid, name: n, weight: w, rate: r, qty: q });
+        }
+
+        saveDB();
+        refreshStock();
+        alert("स्टॉक सुरक्षित हुआ!");
+        ['sName','sWeight','sRate','sQty'].forEach(id => document.getElementById(id).value = "");
+    }
+
+    function refreshStock() {
+        const body = document.getElementById('stockBody');
+        body.innerHTML = APP_DB.stock.map(i => `
+            <tr>
+                <td><b>${i.name}</b></td>
+                <td>${i.weight}</td>
+                <td>₹${i.rate}</td>
+                <td style="color:${i.qty < 5 ? 'red' : 'green'}"><b>${i.qty}</b></td>
+                <td onclick="deleteItem('${i.uid}')">🗑️</td>
+            </tr>
+        `).join('');
+
+        const sel = document.getElementById('selProduct');
+        sel.innerHTML = '<option value="">-- सामान चुनें --</option><option value="NEW">+ नया सामान (Unlisted)</option>' + 
+            APP_DB.stock.map(i => `<option value="${i.uid}">${i.name} (${i.weight})</option>`).join('');
+    }
+
+    // Billing Logic
+    function productTrigger() {
+        const val = document.getElementById('selProduct').value;
+        const area = document.getElementById('newInputArea');
+        if(val === "NEW") {
+            area.classList.remove('hidden');
+            document.getElementById('customItemName').focus();
+        } else {
+            area.classList.add('hidden');
+            const item = APP_DB.stock.find(x => x.uid === val);
+            if(item) {
+                document.getElementById('bRate').value = item.rate;
+                document.getElementById('bQty').focus();
+            }
+        }
+    }
+
+    function addToList() {
+        let uid = document.getElementById('selProduct').value;
+        let name = "", rate = parseFloat(document.getElementById('bRate').value), qty = parseInt(document.getElementById('bQty').value);
+
+        if(uid === "NEW") {
+            name = document.getElementById('customItemName').value.trim();
+            uid = "manual_" + Date.now();
+        } else {
+            const item = APP_DB.stock.find(x => x.uid === uid);
+            if(item) name = item.name + " (" + item.weight + ")";
+        }
+
+        if(!name || isNaN(rate) || isNaN(qty) || qty <= 0) return alert("विवरण सही भरें!");
+
+        currentCart.push({ uid, name, rate, qty, total: rate * qty });
+        renderCart();
+        
+        ['bQty','customItemName','selProduct','bRate'].forEach(id => document.getElementById(id).value = "");
+        document.getElementById('newInputArea').classList.add('hidden');
+    }
+
+    function renderCart() {
+        const area = document.getElementById('listCard');
+        area.classList.toggle('hidden', currentCart.length === 0);
+        let grand = 0;
+        document.getElementById('listRows').innerHTML = currentCart.map((i, idx) => {
+            grand += i.total;
+            return `<tr><td>${i.name}</td><td>${i.qty}</td><td>₹${i.total.toFixed(2)}</td><td onclick="removeFromCart(${idx})" style="color:red">✖</td></tr>`;
+        }).join('');
+        document.getElementById('grandTotal').innerText = "₹" + grand.toFixed(2);
+    }
+
+    function finalizeBill() {
+        if(currentCart.length === 0) return;
+        const total = currentCart.reduce((a, b) => a + b.total, 0);
+        const bill = {
+            id: Date.now(),
+            cust: document.getElementById('custName').value || "नकद ग्राहक",
+            items: [...currentCart],
+            total: total,
+            date: new Date().toLocaleDateString('hi-IN'),
+            time: new Date().toLocaleTimeString('hi-IN')
+        };
+
+        // Stock Deduction
+        currentCart.forEach(c => {
+            let sItem = APP_DB.stock.find(x => x.uid === c.uid);
+            if(sItem) sItem.qty -= c.qty;
+        });
+
+        APP_DB.sales.unshift(bill);
+        saveDB();
+        
+        document.getElementById('modalOverlay').style.display = 'flex';
+        document.getElementById('modalTotal').innerText = "₹" + total.toFixed(2);
+        document.getElementById('qrCode').innerHTML = "";
+        new QRCode(document.getElementById('qrCode'), { 
+            text: `upi://pay?pa=${APP_DB.cfg.upi}&am=${total}&tn=${APP_DB.cfg.name}`,
+            width: 130, height: 130
+        });
+    }
+
+    // Core Helpers
+    function saveDB() {
+        localStorage.setItem('ay_cfg_v4', JSON.stringify(APP_DB.cfg));
+        localStorage.setItem('ay_stk_v4', JSON.stringify(APP_DB.stock));
+        localStorage.setItem('ay_sls_v4', JSON.stringify(APP_DB.sales));
+    }
+
+    function saveSettings() {
+        APP_DB.cfg.name = document.getElementById('setStore').value;
+        APP_DB.cfg.upi = document.getElementById('setUpi').value;
+        saveDB(); syncSystem(); alert("सेटिंग्स अपडेट!");
+    }
+
+    function refreshHistory() {
+        document.getElementById('historyList').innerHTML = APP_DB.sales.map(s => `
+            <div style="border-bottom:1px solid #ddd; padding:10px 0; display:flex; justify-content:space-between; align-items:center;">
+                <div><b>${s.cust}</b><br><small>${s.date} | ${s.time}</small></div>
+                <div style="text-align:right">
+                    <b style="color:var(--p)">₹${s.total.toFixed(2)}</b><br>
+                    <button onclick="downloadBill(${s.id})" style="font-size:10px; padding:3px 8px;">PDF</button>
+                    <button onclick="deleteSale(${s.id})" style="font-size:10px; padding:3px 8px; color:red;">🗑️</button>
+                </div>
+            </div>
+        `).join('') || "कोई रिकॉर्ड नहीं";
+    }
+
+    function updateDailyTotal() {
+        const today = new Date().toLocaleDateString('hi-IN');
+        const dayTotal = APP_DB.sales.filter(s => s.date === today).reduce((a, b) => a + b.total, 0);
+        document.getElementById('topSale').innerText = `आज की बिक्री: ₹${dayTotal.toFixed(2)}`;
+    }
+
+    function deleteItem(uid) { if(confirm("हटाएं?")) { APP_DB.stock = APP_DB.stock.filter(x => x.uid !== uid); saveDB(); refreshStock(); } }
+    function deleteSale(id) { if(confirm("डिलीट?")) { APP_DB.sales = APP_DB.sales.filter(x => x.id !== id); saveDB(); refreshHistory(); updateDailyTotal(); } }
+    function removeFromCart(idx) { currentCart.splice(idx, 1); renderCart(); }
+    function closeModal() { document.getElementById('modalOverlay').style.display='none'; currentCart=[]; document.getElementById('custName').value=""; renderCart(); syncSystem(); showPage('billing'); }
+    function resetApp() { if(confirm("चेतावनी: सारा डेटा डिलीट हो जाएगा!")) { localStorage.clear(); location.reload(); } }
+    function exportData() { 
+        const blob = new Blob([JSON.stringify(APP_DB)], {type:"application/json"}); 
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Ayansh_Backup.json`; a.click(); 
+    }
+
+    function printPDF() { downloadBill(APP_DB.sales[0].id); }
+
+    function downloadBill(id) {
+        const s = APP_DB.sales.find(x => x.id === id);
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.setFontSize(22); doc.setTextColor(0, 43, 94); doc.text(APP_DB.cfg.name, 105, 20, {align:'center'});
+        doc.setFontSize(10); doc.setTextColor(100); doc.text("Tax Invoice | Pawai, MP", 105, 27, {align:'center'});
+        doc.line(15, 30, 195, 30);
+        doc.setTextColor(0); doc.text(`Customer: ${s.cust}`, 15, 38);
+        doc.text(`Bill ID: ${s.id} | Date: ${s.date} ${s.time}`, 15, 43);
+        doc.autoTable({
+            startY: 48,
+            head: [['Item Name', 'Qty', 'Rate', 'Total']],
+            body: s.items.map(i => [i.name, i.qty, i.rate.toFixed(2), i.total.toFixed(2)]),
+            theme: 'grid',
+            headStyles: { fillColor: [0, 43, 94] }
+        });
+        doc.setFontSize(14);
+        doc.text(`Grand Total: Rs. ${s.total.toFixed(2)}`, 140, doc.lastAutoTable.finalY + 15);
+        doc.save(`${s.cust}_Bill.pdf`);
+    }
+</script>
+</body>
+  </html>
