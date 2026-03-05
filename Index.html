@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>अयांश व्यापार V121 | रोहित भाई</title>
+    <style>
+        /* V111 का ओरिजिनल कलर और डिजाइन */
+        :root { --p: #0052cc; --s: #ff8c00; --d: #d32f2f; --c: #2e7d32; --bg: #f4f7f9; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 90px; }
+        .header { background: var(--p); color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        
+        /* लोगो के लिए जोड़ी गई जगह */
+        .logo-box { width: 45px; height: 45px; border-radius: 50%; background: white; border: 2px solid var(--s); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .logo-box img { width: 100%; height: 100%; object-fit: cover; }
+
+        .page { display: none; padding: 12px; max-width: 600px; margin: auto; }
+        .active { display: block; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 12px; border: 1px solid #ddd; }
+        input, select { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
+        .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .btn-sale { background: var(--p); width: 100%; margin-top: 10px; padding: 15px; font-size: 16px; }
+        .btn-pay { background: var(--c); flex: 1; } 
+        .btn-wa { background: #25D366; flex: 1; }
+        .btn-del { background: var(--d); padding: 8px; width: 35px; height: 35px; border-radius: 50%; }
+        
+        .nav { position: fixed; bottom: 0; width: 100%; height: 75px; background: white; display: flex; border-top: 2px solid #ddd; z-index: 1000; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; font-size: 11px; cursor: pointer; }
+        .nav-active { color: var(--p); font-weight: bold; border-top: 5px solid var(--p); background: #f8faff; }
+        
+        /* लेजर बॉक्स (हिसाब देखने के लिए) */
+        .ledger-box { background: #fffde7; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 13px; border-left: 4px solid var(--s); display: none; }
+
+        #printArea { display:none; background:white; padding:20px; font-family:monospace; }
+        @media print { body * { visibility: hidden; } #printArea, #printArea * { visibility: visible; } #printArea { display: block; position: absolute; left: 0; top: 0; width: 100%; } }
+    </style>
+</head>
+<body onload="checkLock()">
+
+<div id="lock" style="position:fixed; inset:0; background:var(--p); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; color:white;">
+    <h2 style="margin-bottom:15px;">अयांश व्यापार लॉगिन</h2>
+    <input type="password" id="pInp" placeholder="पासवर्ड" style="max-width:280px; text-align:center;">
+    <button class="btn" style="background:var(--s); width:180px; margin-top:15px;" onclick="unlock()">प्रवेश करें</button>
+</div>
+
+<div id="app" style="display:none;">
+    <div class="header">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <div class="logo-box"><img id="hLogo" src=""></div>
+            <div><b id="hName">लोडिंग...</b><br><small id="hMobDisplay" style="font-size:10px;"></small></div>
+        </div>
+        <span onclick="tab('set')" style="cursor:pointer; font-size:20px;">⚙️</span>
+    </div>
+
+    <div id="pg-home" class="page active">
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <div class="card" style="flex:1; background:var(--d); color:white; border:none; text-align:center;">कुल बकाया<br><b id="totOut">₹0</b></div>
+            <div class="card" style="flex:1; background:var(--c); color:white; border:none; text-align:center;">आज जमा<br><b id="totIn">₹0</b></div>
+        </div>
+        <input type="text" id="srch" placeholder="किसान का नाम खोजें..." onkeyup="renderHome()">
+        <div id="pList" style="margin-top:10px;"></div>
+    </div>
+
+    <div id="pg-bill" class="page">
+        <div class="card">
+            <h4>👤 किसान विवरण</h4>
+            <input type="text" id="pN" placeholder="किसान का नाम" list="pTips">
+            <input type="number" id="pM" placeholder="WhatsApp नंबर">
+        </div>
+        <div class="card" style="border: 2px solid var(--s);">
+            <h4 style="color:var(--s); margin-top:0;">🛒 आइटम जोड़ें</h4>
+            <select id="stockSel" onchange="fillStockItem()"><option value="">स्टॉक से चुनें</option></select>
+            <input type="text" id="iN" placeholder="सामान का नाम">
+            <div style="display:flex; gap:5px;"><input type="number" id="iP" placeholder="रेट"><input type="number" id="iQ" placeholder="मात्रा" value="1"></div>
+            <button class="btn" style="background:var(--s); width:100%; margin-top:10px;" onclick="addToCart()">+ बिल में जोड़ें</button>
+            <div id="cartArea" style="margin-top:10px;"></div>
+            <h3 id="cartTotal" style="text-align:right;">कुल: ₹0</h3>
+            <button class="btn btn-sale" id="saveBillBtn" onclick="saveBill()">💾 बिल सेव करें</button>
+            <div id="afterSaveActions" style="display:none; gap:5px; margin-top:10px;">
+                <button class="btn" style="background:#555; flex:1;" onclick="window.print()">🖨️ प्रिंट</button>
+                <button class="btn btn-wa" id="waBtn">📲 WhatsApp</button>
+                <button class="btn" style="background:#888; flex:1;" onclick="location.reload()">🔄 नया</button>
+            </div>
+        </div>
+        <div class="card">
+            <h4>💰 नगद जमा</h4>
+            <input type="number" id="pAmt" placeholder="जमा राशि ₹">
+            <button class="btn btn-sale" style="background:var(--c)" onclick="savePayment()">✅ जमा करें</button>
+        </div>
+    </div>
+
+    <div id="pg-stock" class="page">
+        <div class="card"><h4>📦 स्टॉक मैनेजमेंट</h4><input type="text" id="sN" placeholder="नाम"><input type="number" id="sQ" placeholder="मात्रा"><input type="number" id="sR" placeholder="रेट"><button class="btn btn-sale" onclick="addStock()">स्टॉक में जोड़ें</button></div>
+        <div id="stockList"></div>
+    </div>
+
+    <div id="pg-set" class="page">
+        <div class="card">
+            <h4>⚙️ दुकान सेटिंग</h4>
+            <label style="font-size:12px;">दुकान का लोगो चुनें:</label>
+            <input type="file" accept="image/*" onchange="updateLogo(this)">
+            <input type="text" id="cfgN" placeholder="दुकान का नाम">
+            <input type="text" id="cfgM" placeholder="मोबाइल नंबर">
+            <input type="text" id="cfgG" placeholder="GSTIN (यदि है)">
+            <input type="password" id="cfgP" placeholder="पासवर्ड बदलें">
+            <button class="btn btn-sale" onclick="saveCfg()">सेटिंग सेव करें</button>
+        </div>
+        <div class="card">
+            <h4>📧 बैकअप विकल्प</h4>
+            <button class="btn" style="background:var(--c); width:100%; margin-bottom:10px;" onclick="sendEmailBackup()">ईमेल पर बैकअप भेजें</button>
+            <button class="btn" style="background:#555; width:100%;" onclick="downloadBackup()">फाइल डाउनलोड करें</button>
+        </div>
+    </div>
+
+    <nav class="nav">
+        <div class="nav-item nav-active" onclick="tab('home', this)">🏠<span>होम</span></div>
+        <div class="nav-item" onclick="tab('bill', this)">📝<span>बिलिंग</span></div>
+        <div class="nav-item" onclick="tab('stock', this)">📦<span>स्टॉक</span></div>
+        <div class="nav-item" onclick="tab('set', this)">⚙️<span>सेटिंग</span></div>
+    </nav>
+</div>
+
+<div id="printArea">
+    <center>
+        <img id="prLogo" src="" style="width:60px; height:60px; border-radius:50%; display:none;">
+        <h2 id="prDukan"></h2>
+        <p id="prMob"></p>
+        <p id="prGst" style="font-weight:bold;"></p>
+    </center>
+    <hr><p>किसान: <b id="prKisan"></b> | तारीख: <span id="prDate"></span></p><hr>
+    <div id="prItems"></div><hr><h3 style="text-align:right;">कुल: ₹<span id="prTotal"></span></h3>
+</div>
+<datalist id="pTips"></datalist>
+
+<script>
+    const K = "VYAPAR_V94_ROHIT";
+    let DB = JSON.parse(localStorage.getItem(K)) || { cfg:{n:"अयांश कृषि", p:"1234", m:"", l:"", g:""}, tx:[], stock:[] };
+    let cart = [];
+
+    function unlock() { if(document.getElementById('pInp').value === DB.cfg.p || document.getElementById('pInp').value === "1234") { document.getElementById('lock').style.display='none'; document.getElementById('app').style.display='block'; init(); } else alert("गलत पासवर्ड!"); }
+    function init() { 
+        document.getElementById('hName').innerText = DB.cfg.n; 
+        document.getElementById('hLogo').src = DB.cfg.l || ""; 
+        document.getElementById('hMobDisplay').innerText = DB.cfg.m;
+        document.getElementById('cfgN').value = DB.cfg.n;
+        document.getElementById('cfgM').value = DB.cfg.m;
+        document.getElementById('cfgG').value = DB.cfg.g || "";
+        renderHome(); renderStock(); updateStockDrop(); 
+    }
+    
+    function tab(p, el) { document.querySelectorAll('.page').forEach(x => x.classList.remove('active')); document.getElementById('pg-'+p).classList.add('active'); if(el) { document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active')); el.classList.add('nav-active'); } }
+
+    function renderHome() {
+        const q = document.getElementById('srch').value.toLowerCase();
+        const summary = {}; const phones = {}; let tO = 0; let tI = 0;
+        const today = new Date().toLocaleDateString();
+        DB.tx.forEach(t => { 
+            if(!summary[t.name]) summary[t.name] = 0; summary[t.name] += (t.type==='sale'?t.amt:-t.amt);
+            if(t.phone) phones[t.name] = t.phone;
+            if(t.type==='rec' && t.date.includes(today)) tI += t.amt;
+        });
+        let h = ""; 
+        Object.keys(summary).sort().forEach(n => {
+            let bal = summary[n];
+            if(n.toLowerCase().includes(q) && bal !== 0) {
+                if(bal > 0) tO += bal;
+                let ldr = DB.tx.filter(x => x.name === n).map(x => `<div>${x.date.split(',')[0]} - ${x.type==='sale'?'उधार':'जमा'} - ₹${x.amt}</div>`).join('');
+                h += `<div class="card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;" onclick="toggleLedger('${n}')">
+                        <div><b>${n}</b><br><small style="color:${bal>0?'red':'green'}; font-weight:bold;">बकाया: ₹${bal}</small></div>
+                        <button class="btn btn-del" onclick="deleteKisan('${n}')">🗑️</button>
+                    </div>
+                    <div id="ldr-${n}" class="ledger-box">${ldr}</div>
+                    <div style="display:flex; gap:5px; margin-top:10px;">
+                        <button class="btn btn-pay" onclick="tab('bill'); document.getElementById('pN').value='${n}'; document.getElementById('pAmt').focus();">➕ जमा</button>
+                        <button class="btn btn-wa" onclick="window.open('https://wa.me/91${phones[n]||''}?text=बकाया: ₹${bal}')">📲 WA</button>
+                    </div>
+                </div>`;
+            }
+        });
+        document.getElementById('pList').innerHTML = h;
+        document.getElementById('totOut').innerText = "₹"+tO; document.getElementById('totIn').innerText = "₹"+tI;
+        document.getElementById('pTips').innerHTML = [...new Set(DB.tx.map(t=>t.name))].map(n=>`<option value="${n}">`).join('');
+    }
+
+    function toggleLedger(n) { let e = document.getElementById('ldr-'+n); e.style.display = e.style.display==='block'?'none':'block'; }
+    
+    function addToCart() { 
+        const n = document.getElementById('iN').value, p = parseFloat(document.getElementById('iP').value), q = parseFloat(document.getElementById('iQ').value); 
+        if(!n || isNaN(p)) return; 
+        cart.push({ n, p, q, t:p*q }); 
+        renderCart();
+        document.getElementById('iN').value=""; document.getElementById('iP').value=""; 
+    }
+
+    function renderCart() { 
+        let h = ""; let tt = 0; 
+        cart.forEach((i, idx) => { h += `<div style="display:flex; justify-content:space-between; padding:3px 0;"><span>${i.n}</span><b>₹${i.t}</b></div>`; tt += i.t; }); 
+        document.getElementById('cartArea').innerHTML = h; 
+        document.getElementById('cartTotal').innerText = "कुल: ₹"+tt; 
+    }
+
+    function saveBill() { 
+        const n = document.getElementById('pN').value, m = document.getElementById('pM').value; 
+        if(!n || cart.length === 0) return alert("नाम और सामान भरें!"); 
+        const tt = cart.reduce((s,i)=>s+i.t, 0); 
+        DB.tx.push({ id:Date.now(), name:n, phone:m, amt:tt, type:'sale', date:new Date().toLocaleString(), itms:[...cart] }); 
+        save(); 
+        document.getElementById('saveBillBtn').style.display="none"; 
+        document.getElementById('afterSaveActions').style.display="flex"; 
+        // प्रिंट
+        document.getElementById('prDukan').innerText = DB.cfg.n; 
+        document.getElementById('prMob').innerText = "मो: " + DB.cfg.m;
+        document.getElementById('prGst').innerText = DB.cfg.g ? "GSTIN: " + DB.cfg.g : "";
+        document.getElementById('prKisan').innerText = n; document.getElementById('prTotal').innerText = tt; 
+        document.getElementById('prDate').innerText = new Date().toLocaleDateString(); 
+        if(DB.cfg.l) { document.getElementById('prLogo').src = DB.cfg.l; document.getElementById('prLogo').style.display="block"; } 
+        let pitms = ""; cart.forEach(i => pitms += `<div style="display:flex; justify-content:space-between;"><span>${i.n}</span><span>₹${i.t}</span></div>`); 
+        document.getElementById('prItems').innerHTML = pitms; 
+        document.getElementById('waBtn').onclick = () => window.open(`https://wa.me/91${m}?text=नया बिल: ₹${tt}`); 
+    }
+
+    function savePayment() { const n = document.getElementById('pN').value, a = parseFloat(document.getElementById('pAmt').value); if(!n || isNaN(a)) return; DB.tx.push({ id:Date.now(), name:n, amt:a, type:'rec', date:new Date().toLocaleString() }); save(); alert("जमा सफल!"); location.reload(); }
+    function updateLogo(el) { const r = new FileReader(); r.onload = (e) => { DB.cfg.l = e.target.result; save(); document.getElementById('hLogo').src = e.target.result; }; r.readAsDataURL(el.files[0]); }
+    function saveCfg() { DB.cfg.n = document.getElementById('cfgN').value; DB.cfg.m = document.getElementById('cfgM').value; DB.cfg.g = document.getElementById('cfgG').value; if(document.getElementById('cfgP').value) DB.cfg.p = document.getElementById('cfgP').value; save(); alert("सेटिंग सेव हुई!"); location.reload(); }
+    function deleteKisan(n) { if(confirm("हटाएं?")) { DB.tx = DB.tx.filter(t => t.name !== n); save(); renderHome(); } }
+    function save() { localStorage.setItem(K, JSON.stringify(DB)); }
+    function downloadBackup() { const blob = new Blob([JSON.stringify(DB)], {type: "application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download="Backup.json"; a.click(); }
+    function sendEmailBackup() { window.location.href = `mailto:?subject=Vyapar_Backup&body=${encodeURIComponent(JSON.stringify(DB))}`; }
+    function addStock() { const n = document.getElementById('sN').value, q = document.getElementById('sQ').value, r = document.getElementById('sR').value; if(n) DB.stock.push({n,q,r}); save(); renderStock(); }
+    function renderStock() { let h = ""; DB.stock.forEach((s,i) => h += `<div class="card" style="display:flex; justify-content:space-between;"><span>${s.n} (₹${s.r})</span><span onclick="DB.stock.splice(${i},1);save();renderStock();">✖</span></div>`); document.getElementById('stockList').innerHTML = h; }
+    function updateStockDrop() { document.getElementById('stockSel').innerHTML = '<option value="">स्टॉक चुनें</option>' + DB.stock.map(s=>`<option value="${s.n}">${s.n}</option>`).join(''); }
+    function fillStockItem() { const s = DB.stock.find(x => x.n === document.getElementById('stockSel').value); if(s) { document.getElementById('iN').value = s.n; document.getElementById('iP').value = s.r; } }
+</script>
+</body>
+</html>
