@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>अयांश व्यापार V112 | रोहित भाई</title>
+    <style>
+        :root { --p: #0052cc; --s: #ff8c00; --d: #d32f2f; --c: #2e7d32; --bg: #f4f7f9; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding-bottom: 90px; }
+        .header { background: var(--p); color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .logo-box { width: 45px; height: 45px; border-radius: 50%; background: white; border: 2px solid var(--s); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .logo-box img { width: 100%; height: 100%; object-fit: cover; }
+        .page { display: none; padding: 12px; max-width: 600px; margin: auto; }
+        .active { display: block; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 12px; border: 1px solid #ddd; }
+        input, select, textarea { width: 100%; padding: 12px; margin-top: 8px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; }
+        .btn { border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; display: flex; align-items: center; justify-content: center; gap: 5px; font-size: 13px; text-decoration: none; }
+        .btn-add { background: var(--s); width: 100%; margin-top: 10px; padding: 14px; font-size: 15px; }
+        .btn-sale { background: var(--p); width: 100%; margin-top: 10px; padding: 15px; font-size: 16px; }
+        .btn-pay { background: var(--c); flex: 1; } 
+        .btn-wa { background: #25D366; flex: 1; }
+        .btn-prn { background: #555; flex: 1; }
+        .btn-del { background: var(--d); padding: 8px; width: auto; flex: 0.2; }
+        .nav { position: fixed; bottom: 0; width: 100%; height: 75px; background: white; display: flex; border-top: 2px solid #ddd; z-index: 1000; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #666; font-size: 11px; cursor: pointer; }
+        .nav-active { color: var(--p); font-weight: bold; border-top: 5px solid var(--p); background: #f8faff; }
+        .ledger-row { padding: 10px; border-bottom: 1px solid #eee; font-size: 13px; }
+        .item-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dotted #ccc; font-size: 14px; }
+        #printArea { display:none; background:white; padding:20px; font-family:monospace; }
+        @media print { body * { visibility: hidden; } #printArea, #printArea * { visibility: visible; } #printArea { display: block; position: absolute; left: 0; top: 0; width: 100%; } }
+    </style>
+</head>
+<body onload="checkLock()">
+
+<div id="lock" style="position:fixed; inset:0; background:var(--p); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; color:white;">
+    <h2>अयांश व्यापार V112</h2>
+    <input type="password" id="pInp" placeholder="पासवर्ड डालें">
+    <button class="btn btn-add" style="max-width:300px;" onclick="unlock()">लॉगिन</button>
+</div>
+
+<div id="app" style="display:none;">
+    <div class="header">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div class="logo-box"><img id="hLogo" src=""></div>
+            <div><b id="hName">दुकान</b><br><small id="hMobDisplay" style="font-size:10px; opacity:0.8;"></small></div>
+        </div>
+        <span onclick="tab('set')" style="cursor:pointer; font-size:22px;">⚙️</span>
+    </div>
+
+    <div id="pg-home" class="page active">
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <div class="card" style="flex:1; background:var(--d); color:white; border:none; text-align:center;">कुल उधारी<br><b id="totOut">₹0</b></div>
+            <div class="card" style="flex:1; background:var(--c); color:white; border:none; text-align:center;">आज जमा<br><b id="totIn">₹0</b></div>
+        </div>
+        <input type="text" id="srch" placeholder="किसान खोजें..." onkeyup="renderHome()">
+        <div id="pList" style="margin-top:10px;"></div>
+    </div>
+
+    <div id="pg-bill" class="page">
+        <div class="card">
+            <h4>👤 किसान</h4>
+            <input type="text" id="pN" placeholder="नाम" list="pTips">
+            <input type="number" id="pM" placeholder="मोबाइल">
+        </div>
+        <div class="card" style="border: 2px solid var(--s);">
+            <h4 style="color:var(--s);">🛒 नया बिल</h4>
+            <select id="stockSel" onchange="fillStockItem()"><option value="">स्टॉक से चुनें</option></select>
+            <input type="text" id="iN" placeholder="सामान का नाम">
+            <div style="display:flex; gap:8px;">
+                <input type="number" id="iP" placeholder="रेट ₹">
+                <input type="number" id="iQ" placeholder="मात्रा" value="1">
+            </div>
+            <button class="btn btn-add" onclick="addToCart()">+ आइटम जोड़ें</button>
+            <div id="cartArea" style="margin-top:12px; border-top:1px dashed #ccc;"></div>
+            <h3 id="cartTotal" style="text-align:right;">कुल: ₹0</h3>
+            <button class="btn btn-sale" id="saveBillBtn" onclick="saveBill()">💾 बिल सेव करें</button>
+            <div id="afterSaveActions" style="display:none; gap:8px; margin-top:10px;">
+                <button class="btn btn-prn" onclick="window.print()">🖨️ प्रिंट</button>
+                <button class="btn btn-wa" id="waBtn">📲 WhatsApp</button>
+                <button class="btn" style="background:#888" onclick="location.reload()">🔄 नया बिल</button>
+            </div>
+        </div>
+        <div class="card" style="border: 2px solid var(--c);">
+            <h4>💰 नगद जमा</h4>
+            <input type="number" id="pAmt" placeholder="जमा राशि ₹">
+            <button class="btn btn-pay" style="width:100%; margin-top:10px;" onclick="savePayment()">✅ जमा करें</button>
+        </div>
+    </div>
+
+    <div id="pg-ledger" class="page">
+        <button class="btn" style="background:#555; margin-bottom:10px; width:80px;" onclick="tab('home')">⬅ वापस</button>
+        <div class="card">
+            <h3 id="ldName" style="margin:0;"></h3>
+            <p id="ldMob" style="color:#666;"></p>
+            <hr>
+            <div id="ledgerContent"></div>
+            <h3 id="ldTotal" style="text-align:right; color:var(--d);"></h3>
+        </div>
+    </div>
+
+    <div id="pg-stock" class="page">
+        <div class="card"><h4>📦 स्टॉक</h4><input type="text" id="sN" placeholder="नाम"><input type="number" id="sQ" placeholder="मात्रा"><input type="number" id="sR" placeholder="रेट"><button class="btn btn-add" onclick="addStock()">सेव करें</button></div>
+        <div id="stockList"></div>
+    </div>
+
+    <div id="pg-set" class="page">
+        <div class="card">
+            <h4>⚙️ दुकान सेटिंग</h4>
+            <label>लोगो अपलोड करें:</label><input type="file" accept="image/*" onchange="updateLogo(this)">
+            <input type="text" id="cfgN" placeholder="दुकान का नाम">
+            <input type="text" id="cfgM" placeholder="मोबाइल">
+            <input type="text" id="cfgG" placeholder="GSTIN (GST नंबर)">
+            <input type="password" id="cfgP" placeholder="नया पासवर्ड">
+            <button class="btn btn-sale" onclick="saveCfg()">सेव करें</button>
+        </div>
+        <div class="card" style="background:#fff3e0;">
+            <h4>📥 बैकअप (डेटा सुरक्षित करें)</h4>
+            <button class="btn btn-pay" style="width:100%; margin-bottom:10px;" onclick="sendEmailBackup()">📧 ईमेल बैकअप</button>
+            <button class="btn" style="background:#555; width:100%;" onclick="downloadBackup()">📥 फाइल डाउनलोड</button>
+        </div>
+        <div class="card" style="border:1px dashed red;"><textarea id="updC" rows="2" placeholder="अपडेट कोड यहाँ पेस्ट करें..."></textarea><button class="btn btn-sale" onclick="runUpdate()">🚀 अपडेट करें</button></div>
+    </div>
+
+    <nav class="nav">
