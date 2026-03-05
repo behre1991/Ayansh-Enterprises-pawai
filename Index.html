@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ayansh Enterprises - Professional Billing</title>
+    <style>
+        :root { --blue: #0056D2; --orange: #FF8C00; --green: #27ae60; --dark: #455A64; }
+        body { font-family: sans-serif; background: #f0f4f8; margin: 0; padding-bottom: 80px; }
+        
+        /* हेडर - आपके लोगो के साथ */
+        .top-bar { background: var(--blue); color: white; padding: 12px 15px; display: flex; align-items: center; gap: 12px; border-bottom: 4px solid var(--orange); position: sticky; top: 0; z-index: 1000; }
+        .logo-circ { width: 45px; height: 45px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--blue); font-weight: bold; border: 1px solid var(--orange); }
+
+        .container { padding: 12px; max-width: 500px; margin: auto; }
+        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #ddd; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        
+        /* इनपुट बॉक्स - दुकानदार के हिसाब से */
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; font-size: 14px; }
+        .inp-field { 
+            width: 100% !important; height: 48px !important; margin-bottom: 15px !important; 
+            border: 2px solid #BDC3C7 !important; border-radius: 8px !important; 
+            font-size: 16px !important; padding: 10px !important; box-sizing: border-box !important;
+            display: block !important; background: white !important;
+        }
+
+        /* बटन डिजाइन */
+        .btn-cam { background: var(--dark); color: white; padding: 12px; border-radius: 8px; border: none; width: 100%; margin-bottom: 15px; font-weight: bold; }
+        .btn-save { background: var(--orange); color: white; padding: 15px; border-radius: 10px; border: none; width: 100%; font-size: 18px; font-weight: bold; cursor: pointer; }
+        
+        /* नकद-उधार स्विच */
+        .pay-type { display: flex; gap: 10px; margin-bottom: 15px; }
+        .type-opt { flex: 1; padding: 12px; border: 2px solid #ccc; border-radius: 8px; text-align: center; font-weight: bold; cursor: pointer; }
+        .type-active { border-color: var(--blue); background: #eef5ff; color: var(--blue); }
+
+        /* नेविगेशन बार */
+        .footer-nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 70px; border-top: 1px solid #DDD; z-index: 1000; }
+        .nav-link { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #7F8C8D; font-size: 12px; font-weight: bold; cursor: pointer; }
+        .nav-active { color: var(--blue); border-top: 4px solid var(--blue); background: #F0F7FF; }
+
+        .page { display: none; }
+        .show { display: block; }
+        #img-prev { width: 100%; border-radius: 8px; margin-bottom: 10px; display: none; border: 1px solid #ccc; }
+        .wa-link { display: none; background: var(--green); color: white; text-align: center; padding: 12px; border-radius: 8px; text-decoration: none; margin-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body onload="init()">
+
+    <div class="top-bar">
+        <div class="logo-circ">AE</div>
+        <div class="shop-name"><b>Ayansh Enterprises Pawai</b></div>
+    </div>
+
+    <div class="container">
+        <div id="pg-billing" class="page">
+            <div class="card">
+                <label>👤 किसान का नाम:</label>
+                <input type="text" id="cName" class="inp-field" placeholder="नाम लिखें">
+                
+                <label>📱 मोबाइल नंबर:</label>
+                <input type="number" id="cMob" class="inp-field" placeholder="नंबर लिखें">
+            </div>
+
+            <div class="card" style="border-top: 4px solid var(--orange);">
+                <label>📸 बिल की फोटो लें:</label>
+                <button class="btn-cam" onclick="document.getElementById('cam').click()">📷 कैमरा खोलें</button>
+                <input type="file" id="cam" accept="image/*" capture="camera" style="display:none" onchange="preview(this)">
+                <img id="img-prev" src="">
+
+                <label>सामान का नाम और रेट:</label>
+                <input type="text" id="iName" class="inp-field" placeholder="जैसे: खाद, बीज...">
+                <input type="number" id="iRate" class="inp-field" placeholder="कुल रुपये (₹)">
+
+                <label>लेन-देन का प्रकार:</label>
+                <div class="pay-type">
+                    <div id="opt-cash" class="type-opt type-active" onclick="setType('नगद')">नगद</div>
+                    <div id="opt-credit" class="type-opt" onclick="setType('उधार')">उधार</div>
+                </div>
+
+                <button class="btn-save" onclick="save()">💾 बिल सेव करें</button>
+                <a id="wa-share" href="#" class="wa-link">📱 WhatsApp पर भेजें</a>
+            </div>
+        </div>
+
+        <div id="pg-ledger" class="page">
+            <div class="card">
+                <h3>📒 पिछला हिसाब (खाता)</h3>
+                <div id="ledger-list">लोड हो रहा है...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-nav">
+        <div class="nav-link" id="n-ledger" onclick="tab('ledger')">🏠<br>खाता</div>
+        <div class="nav-link" id="n-billing" onclick="tab('billing')">📝<br>बिलिंग</div>
+        <div class="nav-link">📦<br>स्टॉक</div>
+    </div>
+
+    <script>
+        const KEY = "ROHIT_VYAPAR_V100_FINAL"; // वही पुरानी चाबी
+        let DB = JSON.parse(localStorage.getItem(KEY)) || { tx: [] };
+        let mode = "नगद";
+
+        function init() {
+            let last = localStorage.getItem('last_tab') || 'billing';
+            tab(last);
+            render();
+        }
+
+        function tab(t) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('show'));
+            document.getElementById('pg-' + t).classList.add('show');
+            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('nav-active'));
+            document.getElementById('n-' + t).classList.add('nav-active');
+            localStorage.setItem('last_tab', t);
+        }
+
+        function setType(val) {
+            mode = val;
+            document.getElementById('opt-cash').classList.toggle('type-active', val==='नगद');
+            document.getElementById('opt-credit').classList.toggle('type-active', val==='उधार');
+        }
+
+        function preview(input) {
+            if (input.files && input.files[0]) {
+                let r = new FileReader();
+                r.onload = e => { 
+                    document.getElementById('img-prev').src = e.target.result;
+                    document.getElementById('img-prev').style.display = 'block';
+                };
+                r.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function save() {
+            let n = document.getElementById('cName').value;
+            let m = document.getElementById('cMob').value;
+            let r = document.getElementById('iRate').value;
+
+            if(!n || !r) return alert("नाम और रेट भरें!");
+
+            DB.tx.push({ n, m, r: parseFloat(r), mode, d: new Date().toLocaleString() });
+            localStorage.setItem(KEY, JSON.stringify(DB));
+
+            // WhatsApp मैसेज तैयार करना
+            let msg = `नमस्ते ${n},%0Aआयंश एंटरप्राइजेज पावै%0Aसामान: ${document.getElementById('iName').value}%0Aरुपये: ₹${r}%0Aपेमेंट: ${mode}%0Aधन्यवाद!`;
+            let wa = `https://wa.me/91${m}?text=${msg}`;
+            document.getElementById('wa-share').href = wa;
+            document.getElementById('wa-share').style.display = 'block';
+
+            alert("बिल सेव हो गया!");
+            render();
+        }
+
+        function render() {
+            let h = "";
+            let names = [...new Set(DB.tx.map(x => x.n))];
+            names.reverse().forEach(name => {
+                let total = DB.tx.filter(x => x.n === name).reduce((s, x) => s + x.r, 0);
+                h += `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${name}</b>: ₹${total}</div>`;
+            });
+            document.getElementById('ledger-list').innerHTML = h || "कोई डेटा नहीं है।";
+        }
+    </script>
+</body>
+</html>
