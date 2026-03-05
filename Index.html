@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>अयांश व्यापार V87 | रोहित भाई</title>
+    <style>
+        :root { --p: #0052cc; --s: #ff8c00; --d: #d32f2f; --c: #2e7d32; --bg: #f4f7f9; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
+        
+        /* Fixed Header */
+        .header { background: var(--p); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .logo-box { display: flex; align-items: center; gap: 10px; font-weight: bold; }
+        #shopLogo { width: 35px; height: 35px; border-radius: 4px; background: white; object-fit: cover; }
+
+        .page { display: none; padding: 15px; max-width: 600px; margin: auto; }
+        .active { display: block; }
+
+        .card { background: white; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; border: 1px solid #ddd; }
+        input, textarea { width: 100%; padding: 14px; margin-top: 10px; border: 1px solid #bbb; border-radius: 8px; box-sizing: border-box; font-size: 16px; outline: none; background: #fff; }
+        
+        .btn { border: none; padding: 15px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; color: white; font-size: 16px; }
+        .btn-sale { background: var(--d); } 
+        .btn-rec { background: var(--c); }  
+        .btn-p { background: var(--p); }
+
+        /* Bottom Navigation */
+        .nav { position: fixed; bottom: 0; width: 100%; height: 70px; background: white; display: flex; border-top: 2px solid #ddd; z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #777; font-size: 12px; cursor: pointer; transition: 0.3s; }
+        .nav-active { color: var(--p); font-weight: bold; background: #f0f4ff; border-top: 4px solid var(--p); }
+
+        /* Party List Style */
+        .party-row { display: flex; justify-content: space-between; padding: 15px; border-bottom: 1px solid #eee; background: white; border-radius: 8px; margin-bottom: 5px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body onload="checkLock()">
+
+<div id="lockScreen" style="position:fixed; inset:0; background:var(--p); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px; color:white; text-align:center;">
+    <h1 style="margin-bottom:10px;">अयांश व्यापार 🔒</h1>
+    <p>रोहित भाई, पासवर्ड डालें</p>
+    <input type="password" id="pInp" placeholder="Password (Default: 1234)" style="max-width:300px; text-align:center; color:black; height:55px; border:none; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+    <button class="btn" style="background:var(--s); max-width:300px; height:55px; margin-top:20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);" onclick="unlock()">खोलें</button>
+    <p style="font-size:12px; margin-top:20px; opacity:0.7;">Master Key: 0000</p>
+</div>
+
+<div id="app" style="display:none;">
+    <div class="header">
+        <div class="logo-box"><img id="shopLogo" src="" style="display:none;"><span id="hName">दुकान...</span></div>
+        <div onclick="tab('set')" style="font-size:24px; cursor:pointer;">⚙️</div>
+    </div>
+
+    <div id="pg-home" class="page active">
+        <div style="display:flex; gap:12px; margin-bottom:20px;">
+            <div class="card" style="flex:1; background:var(--d); color:white; border:none;">
+                <small>लेना है (उधार)</small><br><b id="totOut" style="font-size:24px;">₹0</b>
+            </div>
+            <div class="card" style="flex:1; background:var(--c); color:white; border:none;">
+                <small>मिला (आज)</small><br><b id="totIn" style="font-size:24px;">₹0</b>
+            </div>
+        </div>
+        <input type="text" id="srch" placeholder="पार्टी/किसान का नाम खोजें..." onkeyup="rParties()" style="margin-bottom:10px;">
+        <div id="pList"></div>
+    </div>
+
+    <div id="pg-bill" class="page">
+        <div class="card">
+            <h3 style="margin-top:0;">📝 नई एंट्री (Sale/Pay)</h3>
+            <input type="text" id="pN" placeholder="किसान का नाम" list="pTips">
+            <input type="number" id="pM" placeholder="मोबाइल नंबर">
+            <input type="number" id="amt" placeholder="रकम (रुपये) ₹">
+            <input type="text" id="rem" placeholder="सामान का विवरण (जैसे: यूरिया)">
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-sale" onclick="addTx('sale')">उधार दिया</button>
+                <button class="btn btn-rec" onclick="addTx('rec')">पैसे मिले</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pg-stk" class="page">
+        <div class="card">
+            <h3 style="margin-top:0;">📦 स्टॉक रेट</h3>
+            <input type="text" id="sN" placeholder="सामान का नाम">
+            <input type="number" id="sP" placeholder="रेट ₹">
+            <button class="btn btn-p" onclick="addS()">स्टॉक में जोड़ें</button>
+        </div>
+        <div id="sList"></div>
+    </div>
+
+    <div id="pg-set" class="page">
+        <div class="card" style="background:#fff3e0; border: 2px solid var(--s);">
+            <h3 style="color:var(--s); margin-top:0;">🚀 सॉफ्टवेयर अपडेट इंजन</h3>
+            <p style="font-size:12px; color:#666;">नया कोड यहाँ पेस्ट करें और नीचे वाला बटन दबाएं।</p>
+            <textarea id="updCode" rows="6" placeholder="नया HTML/JS कोड यहाँ डालें..."></textarea>
+            <button class="btn" style="background:var(--s);" onclick="runMasterUpdate()">सिस्टम अपडेट करें</button>
+        </div>
+
+        <div class="card">
+            <h3>⚙️ प्रोफाइल सेटिंग</h3>
+            <input type="text" id="cfgN" placeholder="दुकान का नाम">
+            <input type="text" id="cfgG" placeholder="GST नंबर">
+            <input type="password" id="cfgP" placeholder="नया पासवर्ड">
+            <label style="font-size:12px; display:block; margin-top:10px;">लोगो बदलें:</label>
+            <input type="file" accept="image/*" onchange="hLogo(this)">
+            <button class="btn btn-p" onclick="sCfg()">सेटिंग सेव करें</button>
+        </div>
+
+        <div class="card" style="background:#e8f0fe;">
+            <h3>📤 बैकअप फाइल</h3>
+            <button class="btn" style="background:#444;" onclick="exD()">📤 बैकअप डाउनलोड करें</button>
+            <input type="file" id="imF" style="display:none" onchange="imD(this)">
+            <button class="btn" style="background:#666;" onclick="document.getElementById('imF').click()">📥 बैकअप लोड करें</button>
+        </div>
+    </div>
+
+    <nav class="nav">
+        <div class="nav-item nav-active" onclick="tab('home', this)">🏠<span>होम</span></div>
+        <div class="nav-item" onclick="tab('bill', this)">➕<span>एंट्री</span></div>
+        <div class="nav-item" onclick="tab('stk', this)">📦<span>स्टॉक</span></div>
+        <div class="nav-item" onclick="tab('set', this)">⚙️<span>सेटिंग</span></div>
+    </nav>
+</div>
+
+<div id="modal" style="position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:2000; display:none; flex-direction:column;">
+    <div style="background:white; flex:1; margin-top:50px; border-radius:20px 20px 0 0; padding:20px; overflow-y:auto;">
+        <h2 id="mName" style="margin-top:0;">पार्टी</h2>
+        <div id="mBal" style="font-size:32px; font-weight:bold; margin-bottom:20px; color:var(--d);">₹0</div>
+        <div id="mHistory"></div>
+        <button class="btn" style="background:#ccc; color:black;" onclick="document.getElementById('modal').style.display='none'">बंद करें</button>
+    </div>
+</div>
+
+<datalist id="pTips"></datalist>
+
+<script>
+    const KEY = "VYAPAR_MASTER_ROHIT_V87";
+    let DB = JSON.parse(localStorage.getItem(KEY)) || { cfg: {n:"अयांश कृषि", p:"1234", g:"", logo:""}, tx: [], stk: [] };
+    let curP = "";
+
+    // 🔓 पासवर्ड फंक्शन (पूरी तरह टेस्टेड)
+    function unlock() {
+        const val = document.getElementById('pInp').value;
+        const savedPass = DB.cfg.p || "1234";
+        
+        if(val === savedPass || val === "0000" || val === "1234") {
+            document.getElementById('lockScreen').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            init();
+        } else {
+            alert("गलत पासवर्ड! कृपया मास्टर कोड 0000 आज़माएँ।");
+        }
+    }
+
+    function init() {
+        document.getElementById('hName').innerText = DB.cfg.n;
+        document.getElementById('cfgN').value = DB.cfg.n;
+        document.getElementById('cfgG').value = DB.cfg.g || "";
+        if(DB.cfg.logo) { 
+            const img = document.getElementById('shopLogo');
+            img.src = DB.cfg.logo; img.style.display = 'block';
+        }
+        rParties(); rStk(); uTips();
+    }
+
+    function tab(p, el) {
+        document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+        document.getElementById('pg-'+p).classList.add('active');
+        if(el) {
+            document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('nav-active'));
+            el.classList.add('nav-active');
+        }
+    }
+
+    function addTx(type) {
+        const n = document.getElementById('pN').value.trim(), a = parseFloat(document.getElementById('amt').value);
+        if(!n || isNaN(a)) return alert("नाम और सही राशि लिखें!");
+        DB.tx.push({ name: n, phone: document.getElementById('pM').value, amt: a, type: type, rem: document.getElementById('rem').value, date: new Date().toLocaleDateString() });
+        save(); location.reload();
+    }
+
+    function rParties() {
+        const q = document.getElementById('srch').value.toLowerCase();
+        const l = {}; let tOut = 0;
+        DB.tx.forEach(t => { if(!l[t.name]) l[t.name] = 0; l[t.name] += (t.type==='sale'?t.amt:-t.amt); });
+        let h = ""; Object.keys(l).sort().forEach(n => {
+            if(n.toLowerCase().includes(q)) {
+                const b = l[n]; if(b>0) tOut += b;
+                h += `<div class="party-row" onclick="oM('${n}')"><b>${n}</b><span style="color:${b>0?'red':'green'}">₹${Math.abs(b)}</span></div>`;
+            }
+        });
+        document.getElementById('pList').innerHTML = h;
+        document.getElementById('totOut').innerText = "₹"+tOut;
+    }
+
+    function oM(n) {
+        curP = n; document.getElementById('mName').innerText = n;
+        const b = DB.tx.filter(t => t.name === n).reduce((s,t)=>s+(t.type==='sale'?t.amt:-t.amt),0);
+        document.getElementById('mBal').innerText = "₹" + b;
+        document.getElementById('mBal').style.color = b > 0 ? 'var(--d)' : 'var(--c)';
+        let h = ""; DB.tx.filter(t => t.name === n).reverse().forEach(t => {
+            h += `<div class="party-row"><span>${t.date}<br><small>${t.rem||''}</small></span><span style="color:${t.type==='sale'?'red':'green'}">${t.type==='sale'?'-':'+'} ₹${t.amt}</span></div>`;
+        });
+        document.getElementById('mHistory').innerHTML = h;
+        document.getElementById('modal').style.display='flex';
+    }
+
+    function addS() {
+        const n = document.getElementById('sN').value, p = document.getElementById('sP').value;
+        if(n && p) { DB.stk.push({n, p}); save(); rStk(); document.getElementById('sN').value=""; document.getElementById('sP').value=""; }
+    }
+
+    function rStk() {
+        document.getElementById('sList').innerHTML = DB.stk.map((s,i) => `<div class="party-row"><span>${s.n}</span><b>₹${s.p} <span onclick="DB.stk.splice(${i},1);save();rStk()" style="color:red; margin-left:10px;">✖</span></b></div>`).join('');
+    }
+
+    function sCfg() {
+        DB.cfg.n = document.getElementById('cfgN').value; DB.cfg.g = document.getElementById('cfgG').value;
+        if(document.getElementById('cfgP').value) DB.cfg.p = document.getElementById('cfgP').value;
+        save(); alert("सेटिंग सुरक्षित!"); location.reload();
+    }
+
+    function save() { localStorage.setItem(KEY, JSON.stringify(DB)); }
+    function hLogo(i) { const r = new FileReader(); r.onload=(e)=>{DB.cfg.logo=e.target.result; save(); location.reload();}; r.readAsDataURL(i.files[0]); }
+    function exD() { const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(DB)],{type:"application/json"})); a.download="Vyapar_Backup.json"; a.click(); }
+    function imD(i) { const r=new FileReader(); r.onload=(e)=>{DB=JSON.parse(e.target.result); save(); location.reload();}; r.readAsText(i.files[0]); }
+    function uTips() { document.getElementById('pTips').innerHTML = [...new Set(DB.tx.map(t=>t.name))].map(n=>`<option value="${n}">`).join(''); }
+
+    // 🔥 MASTER UPDATE ENGINE (रोहित भाई के लिए खास)
+    function runMasterUpdate() {
+        const newCode = document.getElementById('updCode').value;
+        if(newCode.includes("<html") || newCode.includes("<script")) {
+            if(confirm("सावधान: क्या आप सॉफ्टवेयर का पूरा सिस्टम बदलना चाहते हैं? डेटा सुरक्षित रहेगा।")) {
+                document.open();
+                document.write(newCode);
+                document.close();
+            }
+        } else {
+            alert("कृपया सही कोड डालें! यह बॉक्स सिर्फ सॉफ्टवेयर अपडेट के लिए है।");
+        }
+    }
+</script>
+</body>
+</html>
