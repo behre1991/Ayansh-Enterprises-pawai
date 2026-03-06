@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>आयांश एंटरप्राइजेज</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding-bottom: 70px; background: #f4f4f9; }
+        header { background: #0056b3; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .page { display: none; padding: 15px; }
+        .active { display: block; }
+        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #333; }
+        .nav button { flex: 1; padding: 15px; color: white; background: none; border: none; font-size: 14px; cursor: pointer; }
+        .nav button:active { background: #0056b3; }
+        input, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { background: #0056b3; color: white; border: none; font-weight: bold; }
+        .settings-menu { cursor: pointer; font-size: 24px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<header>
+    <span>आयांश एंटरप्राइजेज</span>
+    <span class="settings-menu" onclick="showSettings()">⋮</span>
+</header>
+
+<div id="ledger" class="page active">
+    <h3>📒 खाता (लेजर)</h3>
+    <button onclick="alert('ग्राहक खाता')">👤 ग्राहक खाता</button>
+    <button onclick="alert('सप्लायर खाता')">🏢 सप्लायर खाता</button>
+</div>
+
+<div id="billing" class="page">
+    <h3>🧾 बिलिंग</h3>
+    <input type="text" placeholder="किसान का नाम">
+    <input type="number" placeholder="मात्रा (Quantity)">
+    <input type="number" placeholder="रेट (Rate)">
+    <button>बिल में जोड़ें</button>
+</div>
+
+<div id="stock" class="page">
+    <h3>📦 स्टॉक रिपोर्ट</h3>
+    <p>सामान का नाम | मात्रा | रेट</p>
+</div>
+
+<div id="purchase" class="page">
+    <h3>📥 आवक (Purchase)</h3>
+    <input type="text" placeholder="सप्लायर का नाम">
+    <input type="number" placeholder="मात्रा (Quantity)">
+    <input type="number" placeholder="खरीद रेट (Buy Rate)">
+    <button>स्टॉक में जोड़ें</button>
+</div>
+
+<div class="nav">
+    <button onclick="show('ledger')">खाता</button>
+    <button onclick="show('billing')">बिलिंग</button>
+    <button onclick="show('stock')">स्टॉक</button>
+    <button onclick="show('purchase')">आवक</button>
+</div>
+
+<script>
+    // सुरक्षा: पासवर्ड 1234
+    if(prompt("पासवर्ड डालें (1234):") !== "1234") location.reload();
+
+    function show(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+    
+    function showSettings() {
+        alert("सेटिंग: प्रोफाइल, लोगो, GST, पासवर्ड बदलें, अपडेट, सिंक");
+    }
+</script>
+</body>
+</html>
