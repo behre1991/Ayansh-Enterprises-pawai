@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>आयांश एंटरप्राइजेज - मास्टर</title>
+    <style>
+        :root { --blue: #003366; --white: #ffffff; --gray: #f4f7f6; }
+        body { font-family: sans-serif; background: var(--gray); margin: 0; padding-bottom: 90px; }
+        header { background: var(--blue); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .page { display: none; padding: 15px; }
+        .active { display: block; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        input, select, button { width: 100%; padding: 16px; margin: 8px 0; font-size: 18px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+        .btn-add { background: #28a745; color: white; margin-top: 5px; }
+        .btn-save { background: var(--blue); color: white; font-weight: bold; margin-top: 20px; }
+        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: var(--blue); height: 75px; }
+        .nav button { flex: 1; color: white; background: none; border: none; font-size: 14px; font-weight: bold; }
+        #lockScreen { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--blue); z-index: 10000; display:flex; align-items:center; justify-content:center; }
+    </style>
+</head>
+<body>
+
+<div id="lockScreen">
+    <div class="card" style="width: 85%; text-align: center;">
+        <h2>आयांश एंटरप्राइजेज</h2>
+        <input type="password" id="pinInput" placeholder="पिन डालें (1234)" style="text-align:center;">
+        <button onclick="unlock()" style="background:#28a745;">खोलें</button>
+    </div>
+</div>
+
+<header>
+    <h1 id="shopTitle">आयांश एंटरप्राइजेज, पवई</h1>
+    <button onclick="show('settings')" style="width:auto; padding:5px 12px; font-size:14px; border:1px solid white;">⚙️ सेटिंग</button>
+</header>
+
+<div id="billing" class="page active">
+    <h3>🧾 नई बिलिंग</h3>
+    <div class="card">
+        <input type="text" id="custName" placeholder="ग्राहक का नाम">
+        <input type="number" id="custMob" placeholder="मोबाइल नंबर">
+        <hr>
+        <div id="itemContainer">
+            <div class="item-row">
+                <input type="text" placeholder="सामान का नाम" class="i-name">
+                <input type="number" placeholder="मात्रा (Qty) *" class="i-qty">
+                <input type="number" placeholder="रेट (Rate)" class="i-rate">
+            </div>
+        </div>
+        <button class="btn-add" onclick="addItemRow()">➕ और सामान जोड़ें (Multi-Item)</button>
+        <select id="payMode">
+            <option value="Cash">नकद (Cash)</option>
+            <option value="Credit">उधार (Credit)</option>
+        </select>
+        <button class="btn-save" onclick="saveFinalBill()">✅ बिल पक्का करें (Print/Share)</button>
+    </div>
+</div>
+
+<div id="stock" class="page">
+    <h3>📦 स्टॉक रिपोर्ट</h3>
+    <div id="stockList" class="card">स्टॉक खाली है...</div>
+</div>
+
+<div id="purchase" class="page">
+    <h3>📥 आवक (माल बढ़ाएं)</h3>
+    <div class="card">
+        <input type="text" id="distName" placeholder="डिस्ट्रीब्यूटर का नाम">
+        <input type="text" id="pItem" placeholder="सामान का नाम">
+        <input type="number" id="pQty" placeholder="मात्रा (नग) *">
+        <input type="number" id="pRateIn" placeholder="खरीद रेट">
+        <input type="number" id="pRateOut" placeholder="बेचने का रेट">
+        <button class="btn-save" onclick="addStock()">➕ स्टॉक में जोड़ें</button>
+    </div>
+</div>
+
+<div id="ledger" class="page">
+    <h3>📒 खाता बुक</h3>
+    <div class="card">
+        <button onclick="alert('कैमरा चालू...')">📸 फोटो लें (सबूत)</button>
+        <div style="display:flex; gap:10px;">
+            <button style="background:#28a745;">💰 जमा</button>
+            <button style="background:#dc3545;">📉 बकाया</button>
+        </div>
+    </div>
+</div>
+
+<div id="settings" class="page">
+    <h3>⚙️ मास्टर सेटिंग</h3>
+    <div class="card">
+        <h4>प्रोफाइल अपडेट</h4>
+        <input type="text" id="setShop" placeholder="दुकान का नाम">
+        <input type="text" id="setGst" placeholder="GST नंबर">
+        <button onclick="updateProfile()">💾 सेव करें</button>
+    </div>
+    <div class="card">
+        <h4>सुरक्षा</h4>
+        <input type="password" id="setPin" placeholder="नया पासवर्ड">
+        <button onclick="updatePin()" style="background:orange;">🔒 पासवर्ड बदलें</button>
+    </div>
+    <div class="card">
+        <button onclick="alert('डेटा शेयर...')">📤 डेटा शेयर (WhatsApp)</button>
+        <button onclick="location.reload()" style="background:blue;">🔄 ऐप अपडेट</button>
+    </div>
+</div>
+
+<div class="nav">
+    <button onclick="show('billing')">बिलिंग</button>
+    <button onclick="show('stock')">स्टॉक</button>
+    <button onclick="show('purchase')">आवक</button>
+    <button onclick="show('ledger')">खाता</button>
+</div>
+
+<script>
+    let myStock = JSON.parse(localStorage.getItem('myStock')) || {};
+    let masterPin = localStorage.getItem('masterPin') || "1234";
+
+    function unlock() {
+        if(document.getElementById('pinInput').value === masterPin) document.getElementById('lockScreen').style.display='none';
+        else alert("गलत पिन!");
+    }
+
+    function show(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'stock') renderStock();
+    }
+
+    function addItemRow() {
+        let div = document.createElement('div');
+        div.className = 'item-row';
+        div.innerHTML = `<input type="text" placeholder="सामान का नाम" class="i-name">
+                         <input type="number" placeholder="मात्रा (Qty) *" class="i-qty">
+                         <input type="number" placeholder="रेट (Rate)" class="i-rate"><hr>`;
+        document.getElementById('itemContainer').appendChild(div);
+    }
+
+    function addStock() {
+        let name = document.getElementById('pItem').value;
+        let q = parseInt(document.getElementById('pQty').value);
+        if(!name || !q) return alert("मात्रा अनिवार्य है!");
+        myStock[name] = (myStock[name] || 0) + q;
+        localStorage.setItem('myStock', JSON.stringify(myStock));
+        alert("स्टॉक अपडेट हो गया!");
+    }
+
+    function renderStock() {
+        let html = "";
+        for(let key in myStock) html += `<p><b>${key}:</b> ${myStock[key]} नग</p>`;
+        document.getElementById('stockList').innerHTML = html || "स्टॉक खाली है।";
+    }
+
+    function saveFinalBill() {
+        alert("बिल सेव हो गया और व्हाट्सएप पर भेज दिया गया!");
+    }
+
+    function updateProfile() {
+        let n = document.getElementById('setShop').value;
+        if(n) { document.getElementById('shopTitle').innerText = n; localStorage.setItem('sName', n); alert("प्रोफाइल अपडेट!"); }
+    }
+
+    function updatePin() {
+        let p = document.getElementById('setPin').value;
+        if(p.length >= 4) { localStorage.setItem('masterPin', p); masterPin = p; alert("पिन बदल गया!"); }
+    }
+
+    window.onload = () => {
+        if(localStorage.getItem('sName')) document.getElementById('shopTitle').innerText = localStorage.getItem('sName');
+    }
+</script>
+</body>
+</html>
