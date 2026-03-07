@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <title>आयांश मास्टर - 111 प्रो</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; padding-bottom: 70px; background: #f0f0f0; }
+        .page { display: none; padding: 15px; }
+        .active { display: block; }
+        .card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 2px 5px #ccc; }
+        input, button { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #aaa; border-radius: 5px; }
+        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #003366; }
+        .nav button { flex: 1; padding: 15px; border: none; color: white; background: #003366; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="billing" class="page active">
+    <h3>🧾 बिलिंग</h3>
+    <input type="text" id="cust" placeholder="किसान का नाम">
+    <input type="number" id="qty" placeholder="मात्रा">
+    <input type="number" id="rate" placeholder="रेट">
+    <button onclick="addEntry()" style="background:#198754; color:white;">बिल पक्का करें</button>
+</div>
+
+<div id="stock" class="page"><h3>📦 स्टॉक</h3><div id="stock_list"></div></div>
+<div id="purchase" class="page"><h3>📥 आवक (गोपनीय)</h3><input type="number" id="pur_rate" placeholder="खरीद रेट"> <button onclick="savePurchase()">रेट सेव करें</button></div>
+<div id="ledger" class="page"><h3>📒 खाता</h3><div id="ledger_list"></div></div>
+<div id="settings" class="page"><h3>⚙️ सेटिंग्स</h3><button onclick="location.reload()">🔄 सिस्टम अपडेट</button> <button onclick="localStorage.clear(); location.reload();" style="background:red; color:white;">डेटा डिलीट करें</button></div>
+
+<div class="nav">
+    <button onclick="openPage('billing')">बिल</button>
+    <button onclick="openPage('stock')">स्टॉक</button>
+    <button onclick="openPage('purchase')">आवक</button>
+    <button onclick="openPage('ledger')">खाता</button>
+    <button onclick="openPage('settings')">सेट</button>
+</div>
+
+<script>
+    function openPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'ledger') loadLedger();
+    }
+
+    function addEntry() {
+        let name = document.getElementById('cust').value;
+        let total = document.getElementById('qty').value * document.getElementById('rate').value;
+        let ledger = JSON.parse(localStorage.getItem('ledger') || '{}');
+        ledger[name] = (ledger[name] || 0) + total;
+        localStorage.setItem('ledger', JSON.stringify(ledger));
+        alert("बिल पक्का! खाता अपडेट हो गया।");
+    }
+
+    function loadLedger() {
+        let ledger = JSON.parse(localStorage.getItem('ledger') || '{}');
+        let html = "";
+        for(let k in ledger) html += `<div class='card'><b>${k}:</b> ₹${ledger[k]}</div>`;
+        document.getElementById('ledger_list').innerHTML = html;
+    }
+
+    function savePurchase() {
+        localStorage.setItem('pur_rate', document.getElementById('pur_rate').value);
+        alert("आवक रेट गोपनीय तरीके से सुरक्षित!");
+    }
+</script>
+</body>
+</html>
