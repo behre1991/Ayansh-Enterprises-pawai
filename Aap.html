@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <title>आयांश एंटरप्राइजेज</title>
+    <style>
+        body { font-family: sans-serif; margin: 0; background: #f4f4f4; padding-bottom: 70px; }
+        .top-info { display: flex; justify-content: space-between; padding: 3px 20px; font-size: 11px; background: #0f2027; color: #fff; }
+        header { background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d); color: white; padding: 2px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .h-left { display: flex; align-items: center; gap: 15px; } 
+        .logo-box { width: 55px; height: 55px; background: white; color: #1a2a6c; text-align: center; line-height: 55px; font-weight: bold; border-radius: 8px; font-size: 25px; overflow: hidden; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+        .shop-name { font-size: 32px; font-weight: 900; text-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+        .page { display: none; padding: 15px; } .active { display: block; }
+        .card { background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        input, select, button { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { background: #1a2a6c; color: white; border: none; cursor: pointer; font-weight: bold; }
+        nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #1a2a6c; color: white; }
+        nav button { flex: 1; padding: 12px; background: none; border: none; color: white; font-size: 12px; font-weight: bold; }
+        .item-row { display: flex; gap: 5px; align-items: center; }
+        .del-btn { background: #c0392b; width: 50px !important; }
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
+        #lockScreen { position: fixed; top:0; left:0; width:100%; height:100%; background: #1a2a6c; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; padding: 20px; }
+        #passInput { width: 300px; height: 50px; font-size: 20px; color: black; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div id="lockScreen">
+    <h3>आयांश एंटरप्राइजेज</h3>
+    <input type="password" id="passInput" placeholder="पासवर्ड डालें">
+    <button style="width: 300px; height: 50px; background: #27ae60;" onclick="checkPassword()">लॉग इन करें</button>
+</div>
+
+<div class="top-info">
+    <span id="dispGst">GST: ---</span>
+    <div style="display:flex; flex-direction:column; text-align:right;">
+        <span id="dispMob1">मो. 1: ---</span>
+        <span id="dispMob2">मो. 2: ---</span>
+    </div>
+</div>
+
+<header>
+    <div class="h-left">
+        <div id="logoView" class="logo-box" onclick="show('settings')">A</div>
+        <div class="shop-name">आयांश एंटरप्राइजेज</div>
+    </div>
+</header>
+
+<div id="billing" class="page active">
+    <div class="card"><h3>🧾 बिलिंग</h3>
+        <input type="text" placeholder="किसान का नाम"><input type="number" placeholder="मोबाइल नंबर"><input type="text" placeholder="पता">
+        <select><option>स्टॉक से चुनें</option><option>मैन्युअल लिखें</option></select>
+        <div id="billItems">
+            <div class="item-row">
+                <input type="text" placeholder="सामान का नाम"><input type="number" placeholder="मात्रा"><input type="number" placeholder="रेट">
+                <button class="del-btn" onclick="this.parentElement.remove()">❌</button>
+            </div>
+        </div>
+        <button onclick="addMore('billItems')">➕ और जोड़ें</button>
+        <button onclick="saveAppData()">✅ बिल पक्का करें</button>
+        <div class="action-grid">
+            <button style="background:#27ae60;">💰 नकद</button><button style="background:#e67e22;">📝 उधार</button>
+            <button style="background:#2980b9;" onclick="window.print()">🖨️ प्रिंट</button><button style="background:#8e44ad;">🔗 शेयर</button>
+        </div>
+    </div>
+</div>
+
+<div id="purchase" class="page"><div class="card"><h3>📥 आवक</h3><input type="text" placeholder="डिस्ट्रीब्यूटर का नाम"><select><option>खाद</option><option>बीज</option><option>दवाई</option><option>टूल्स</option></select><div id="purchItems"><input type="text" placeholder="सामान का नाम"><input type="number" placeholder="मात्रा"><input type="number" placeholder="खरीद रेट"><input type="number" placeholder="बिक्री रेट"></div><button onclick="addMore('purchItems')">➕ और सामान जोड़ें</button><button onclick="saveAppData()">📦 आवक दर्ज करें</button></div></div>
+<div id="ledger" class="page"><div class="card"><h3>📒 खाता</h3><button>👤 ग्राहक लेजर</button><input type="number" placeholder="ग्राहक का नाम"><input type="number" placeholder="जमा राशि"><button style="background:#27ae60;" onclick="saveAppData()">ग्राहक राशि जमा करें</button><hr><button>🏢 डिस्ट्रीब्यूटर लेजर</button><input type="number" placeholder="डिस्ट्रीब्यूटर का नाम"><input type="number" placeholder="जमा राशि"><button style="background:#27ae60;" onclick="saveAppData()">डिस्ट्रीब्यूटर राशि जमा करें</button></div></div>
+<div id="stock" class="page
