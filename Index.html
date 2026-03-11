@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>अयांश मुनीम | Pro Data</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: sans-serif; background: #fffaf0; margin: 0; padding-bottom: 70px; }
+        
+        .header { background: #ff9800; color: #ffffff; padding: 15px; position: sticky; top: 0; z-index: 1000; }
+        .h-top { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; color: #fff3e0; }
+        .h-main { display: flex; align-items: center; }
+        .logo { width: 50px; height: 50px; background: #ffffff; border-radius: 50%; color: #ff9800; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; font-size: 20px; cursor: pointer; }
+        .shop-info { display: flex; flex-direction: column; }
+        .shop-name { font-size: 20px; font-weight: bold; }
+        .shop-address { font-size: 12px; color: #fff3e0; }
+        
+        .card { background: #ffffff; margin: 10px; padding: 12px; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); border-left: 6px solid #ff9800; }
+        .row { display: flex; gap: 5px; margin-bottom: 5px; width: 100%; }
+        input, select { padding: 12px; border: 1px solid #ffe0b2; border-radius: 6px; width: 100%; }
+        
+        button { width: 100%; padding: 12px; border: none; border-radius: 6px; background: #ff9800; color: white; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .btn-green { background: #2e7d32 !important; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th { background: #fff3e0; color: #e65100; padding: 10px; border: 1px solid #ffe0b2; }
+        td { border: 1px solid #fff3e0; padding: 10px; }
+        
+        .nav-bar { position: fixed; bottom: 0; width: 100%; display: flex; background: #ffffff; border-top: 2px solid #ff9800; }
+        .tab { flex: 1; padding: 15px; text-align: center; font-weight: bold; color: #ff9800; cursor: pointer; font-size: 16px; }
+        .page { display: none; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="h-top"><span>जीएसटी: XXXXX</span> <span>मोबाइल: 9999999999</span></div>
+    <div class="h-main">
+        <div class="logo" onclick="show('p-settings')">🏢</div>
+        <div class="shop-info">
+            <div class="shop-name">अयांश इंटरप्राइजेज</div>
+            <div class="shop-address">दुकान का पता यहाँ डालें</div>
+        </div>
+    </div>
+</div>
+
+<div id="p-billing" class="page" style="display:block;">
+    <div class="card">
+        <div class="row"><input type="text" id="cName" placeholder="नाम" style="flex:3;"> <input type="text" id="cDate" placeholder="दिनांक" style="flex:1;"></div>
+        <div class="row"><input type="number" id="cMob" placeholder="मोबाइल" style="flex:3;"> <input type="text" id="cAddr" placeholder="पता" style="flex:1;"></div>
+    </div>
+    <div class="card">
+        <input type="text" id="iName" placeholder="सामान का नाम" style="margin-bottom:5px;">
+        <select id="iDesc"><option>खाद</option><option>बीज</option><option>दवाई</option></select>
+        <div class="row"><input type="number" id="iQty" placeholder="मात्रा"> <input type="number" id="iRate" placeholder="रेट"></div>
+        <button onclick="addItem()">➕ जोड़ें</button>
+        <table><thead><tr><th>नाम</th><th>मात्रा</th><th>रेट</th></tr></thead><tbody id="list"></tbody></table>
+    </div>
+    <div class="card">
+        <div id="totalSum" style="font-weight:bold; color: #ff9800;">कुल योग: ₹0.00</div>
+        <div class="row">
+            <button onclick="saveBill('नगद')" class="btn-green">💰 नगद</button>
+            <button onclick="saveBill('उधार')">📝 उधार (खाता)</button>
+        </div>
+    </div>
+</div>
+
+<div id="p-khata" class="page">
+    <div class="card"><input type="text" id="searchFarmer" placeholder="किसान खोजें..." onkeyup="filterTable()"></div>
+    <div class="card">
+        <h3>किसान लेजर</h3>
+        <table id="ledgerTable"><thead><tr><th>तारीख</th><th>नाम</th><th>उधार(+)</th><th>जमा(-)</th><th>शेष</th></tr></thead><tbody id="ledgerList"></tbody></table>
+        <button onclick="depositMoney()" class="btn-green">💰 पैसा जमा करें</button>
+        <button style="background:#ef6c00; margin-top:5px;">📤 PDF लेजर शेयर करें</button>
+    </div>
+</div>
+
+<div id="p-settings" class="page">
+    <div class="card"><h3>प्रोफाइल (5 पॉइंट्स)</h3>
+        <input type="file" style="margin-bottom:5px;"><input type="text" placeholder="दुकान नाम"><input type="number" placeholder="मोबाइल"><input type="text" placeholder="जीएसटी"><input type="text" placeholder="पता">
+        <button>🔄 प्रोफाइल अपडेट</button>
+    </div>
+    <div class="card"><h3>सुरक्षा और डेटा</h3>
+        <input type="password" placeholder="नया पासवर्ड"><button style="background:#fb8c00;">🔒 पासवर्ड बदलें</button>
+        <button>📤 डेटा बैकअप</button>
+        <div class="row" style="margin-top:10px;">
+            <input type="text" id="updateCode" placeholder="अपडेट कोड">
+            <button style="background:#d84315; margin-top:0; width:40%;">🚀 अपडेट</button>
+        </div>
+    </div>
+</div>
+
+<div class="nav-bar">
+    <div class="tab" onclick="show('p-billing')">🛒 बिलिंग</div>
+    <div class="tab" onclick="show('p-khata')">📜 खाता</div>
+</div>
+
+<script>
+    let grandTotal = 0; let totalBalance = 0;
+    function show(id) { document.querySelectorAll('.page').forEach(p => p.style.display = 'none'); document.getElementById(id).style.display = 'block'; }
+    function addItem() { 
+        let n=document.getElementById('iName').value, q=document.getElementById('iQty').value, r=document.getElementById('iRate').value;
+        if(n && q && r) { 
+            let row = document.getElementById('list').insertRow();
+            row.innerHTML = `<td>${n}</td><td>${q}</td><td>${r}</td>`;
+            grandTotal += (q * r);
+            document.getElementById('totalSum').innerText = "कुल योग: ₹" + grandTotal;
+        }
+    }
+    function saveBill(type) { 
+        let n=document.getElementById('cName').value, d=document.getElementById('cDate').value;
+        if(type === 'उधार') {
+            totalBalance += grandTotal;
+            let row = document.getElementById('ledgerList').insertRow();
+            row.innerHTML = `<td>${d}</td><td>${n}</td><td>${grandTotal}</td><td>0</td><td>${totalBalance}</td>`;
+        }
+        grandTotal = 0; document.getElementById('totalSum').innerText = "कुल योग: ₹0.00"; document.getElementById('list').innerHTML = "";
+    }
+    function filterTable() {
+        let filter = document.getElementById("searchFarmer").value.toUpperCase();
+        let table = document.getElementById("ledgerTable");
+        let tr = table.getElementsByTagName("tr");
+        for (let i = 1; i < tr.length; i++) {
+            let td = tr[i].getElementsByTagName("td")[1];
+            if (td) tr[i].style.display = td.textContent.toUpperCase().indexOf(filter) > -1 ? "" : "none";
+        }
+    }
+    function depositMoney() { 
+        let n=prompt("नाम:"), a=parseInt(prompt("राशि:")); 
+        if(n && a) { totalBalance -= a; let row = document.getElementById('ledgerList').insertRow(); row.innerHTML = `<td>आज</td><td>${n}</td><td>0</td><td>${a}</td><td>${totalBalance}</td>`; }
+    }
+</script>
+</body>
+</html>
