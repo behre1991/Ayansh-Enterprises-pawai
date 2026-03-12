@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>अयांश मुनीम</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: sans-serif; background: #eef2f3; margin: 0; padding-bottom: 70px; }
+        .header { background: #1976d2; color: #ffffff; padding: 15px; }
+        .h-top { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; color: #bbdefb; }
+        .h-main { display: flex; align-items: center; }
+        .logo { width: 50px; height: 50px; background: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; font-size: 20px; cursor: pointer; overflow: hidden; }
+        .logo img { width: 100%; height: 100%; object-fit: cover; }
+        .card { background: #ffffff; margin: 10px; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-left: 6px solid #ff9800; }
+        input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; width: 100%; margin-bottom: 8px; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; background: #ff9800; color: white; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .btn-green { background: #2e7d32 !important; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        th { background: #fff3e0; color: #e65100; padding: 10px; border-bottom: 2px solid #ffe0b2; }
+        td { border-bottom: 1px solid #eee; padding: 10px; text-align: center; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; display: flex; background: #ffffff; border-top: 1px solid #ddd; }
+        .tab { flex: 1; padding: 15px; text-align: center; font-weight: bold; color: #1976d2; cursor: pointer; }
+        .page { display: none; }
+        .spacer { height: 30px; border-bottom: 1px solid #eee; margin-bottom: 15px; }
+        .bold-big { font-weight: bold; font-size: 18px; border: 2px solid #1976d2 !important; }
+    </style>
+</head>
+<body>
+
+<div id="lock" style="text-align:center; padding-top:100px;">
+    <h3>अयांश मुनीम लॉगिन</h3>
+    <input type="password" id="passInput" placeholder="पासवर्ड (1234)" style="width:70%;">
+    <button onclick="unlockApp()" style="width:70%;">प्रवेश करें</button>
+</div>
+
+<div id="appBody" style="display:none;">
+    <div class="header">
+        <div class="h-top"><span id="dspGst">जीएसटी: XXXXX</span> <span id="dspMob">मोबाइल: 9999999999</span></div>
+        <div class="h-main">
+            <div class="logo" id="dspLogo" onclick="show('p-settings')">🏢</div>
+            <div>
+                <div id="dspName" style="font-weight:bold; font-size:18px;">अयांश इंटरप्राइजेज</div>
+                <div id="dspAddr" style="font-size:12px;">दुकान का पता</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="p-billing" class="page" style="display:block;">
+        <div class="card">
+            <div style="display:flex; gap:10px;">
+                <input type="number" id="oldDue" class="bold-big" placeholder="पुराना बकाया"> 
+                <input type="date" id="cDate" style="width: 40%;">
+            </div>
+            <input type="text" id="cName" placeholder="नाम और पता">
+            <input type="number" id="cMob" placeholder="मोबाइल">
+        </div>
+        <div class="card">
+            <input type="text" id="iName" placeholder="सामान का नाम">
+            <div style="display:flex; gap:5px;">
+                <input type="number" id="iQty" placeholder="मात्रा">
+                <input type="number" id="iRate" placeholder="रेट">
+            </div>
+            <button onclick="addItem()">➕ जोड़ें</button>
+            <table id="billTable"><thead><tr><th>नाम</th><th>मात्रा</th><th>रेट</th></tr></thead><tbody id="list"></tbody></table>
+            <div id="totalSum" style="font-weight:bold; color: #1976d2; margin-top:10px;">कुल योग: ₹0</div>
+            <div style="display:flex; gap:10px;">
+                <button onclick="generateBill('नगद')" class="btn-green">💰 नगद</button>
+                <button onclick="generateBill('उधार')">📝 उधार</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="p-khata" class="page">
+        <div class="card"><input type="text" id="searchFarmer" placeholder="नाम या मोबाइल से खोजें..." onkeyup="filterTable()"></div>
+        <div class="card">
+            <h3>किसान लेजर</h3>
+            <table id="ledgerTable"><thead><tr><th>तारीख</th><th>नाम</th><th>उधार(+)</th><th>जमा(-)</th><th>शेष</th></tr></thead><tbody id="ledgerList"></tbody></table>
+            <button onclick="depositMoney()" class="btn-green">💰 पैसा जमा करें</button>
+            <button onclick="alert('PDF शेयर हो रही है')" style="background:#ef6c00; margin-top:5px;">📤 PDF लेजर शेयर करें</button>
+        </div>
+    </div>
+
+    <div id="p-settings" class="page">
+        <div class="card">
+            <h3>प्रोफाइल सेटिंग</h3>
+            <input type="file" accept="image/*" onchange="previewLogo(this)">
+            <input type="text" id="setName" placeholder="दुकान नाम">
+            <input type="text" id="setMob" placeholder="मोबाइल नंबर">
+            <input type="text" id="setGst" placeholder="जीएसटी">
+            <input type="text" id="setAddr" placeholder="पता">
+            <button onclick="updateProfile()">🔄 अपडेट प्रोफाइल</button>
+            
+            <div class="spacer"></div>
+            
+            <input type="password" id="newPass" placeholder="नया पासवर्ड लिखें">
+            <button onclick="savePass()">🔒 पासवर्ड बदलें</button>
+            
+            <input type="text" id="updateCode" placeholder="अपडेट कोड पेस्ट करें">
+            <button onclick="alert('पूरा बैकअप लिया गया')">📤 पूरा बैकअप लें</button>
+            <button onclick="saveUpdate()">🚀 अपडेट भेजें</button>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="tab" onclick="show('p-billing')">🛒 बिलिंग</div>
+        <div class="tab" onclick="show('p-khata')">📜 खाता</div>
+    </div>
+</div>
+
+<script>
+    let billTotal = 0;
+    function unlockApp() { if(document.getElementById('passInput').value == '1234') { document.getElementById('lock').style.display='none'; document.getElementById('appBody').style.display='block'; } }
+    function show(id) { document.querySelectorAll('.page').forEach(p => p.style.display = 'none'); document.getElementById(id).style.display = 'block'; }
+    function previewLogo(input) { if (input.files && input.files[0]) { let reader = new FileReader(); reader.onload = function(e) { document.getElementById('dspLogo').innerHTML = `<img src="${e.target.result}">`; }; reader.readAsDataURL(input.files[0]); } }
+    
+    function addItem() {
+        let n=document.getElementById('iName'), q=document.getElementById('iQty'), r=document.getElementById('iRate');
+        if(n.value && q.value && r.value) {
+            billTotal += (q.value * r.value);
+            document.getElementById('list').innerHTML += `<tr><td>${n.value}</td><td>${q.value}</td><td>${r.value}</td></tr>`;
+            document.getElementById('totalSum').innerText = "कुल योग: ₹" + billTotal;
+            n.value=''; q.value=''; r.value='';
+        }
+    }
+    
+    function updateProfile() {
+        document.getElementById('dspName').innerText = document.getElementById('setName').value || "अयांश इंटरप्राइजेज";
+        document.getElementById('dspMob').innerText = "मोबाइल: " + (document.getElementById('setMob').value || "9999999999");
+        document.getElementById('dspGst').innerText = "जीएसटी: " + (document.getElementById('setGst').value || "XXXXX");
+        document.getElementById('dspAddr').innerText = document.getElementById('setAddr').value || "दुकान का पता";
+        alert("प्रोफाइल अपडेट हो गई!");
+        document.getElementById('setName').value=''; document.getElementById('setMob').value=''; document.getElementById('setGst').value=''; document.getElementById('setAddr').value='';
+    }
+
+    function generateBill(type) { 
+        let name = document.getElementById('cName').value || "ग्राहक";
+        document.getElementById('ledgerList').innerHTML += `<tr><td>${new Date().toLocaleDateString()}</td><td>${name}</td><td>${billTotal}</td><td>0</td><td>${billTotal}</td></tr>`;
+        alert("बिल " + type + " में जनरेट हुआ!");
+        document.getElementById('list').innerHTML = ''; billTotal = 0; document.getElementById('totalSum').innerText = "कुल योग: ₹0";
+        document.getElementById('cName').value = ''; document.getElementById('cMob').value = ''; document.getElementById('oldDue').value = '';
+    }
+
+    function depositMoney() { 
+        let n=prompt("नाम:"), a=prompt("राशि:"); 
+        if(n && a) {
+            document.getElementById('ledgerList').innerHTML += `<tr><td>${new Date().toLocaleDateString()}</td><td>${n}</td><td>0</td><td>${a}</td><td>-${a}</td></tr>`;
+            alert("पैसा जमा हो गया!");
+        }
+    }
+
+    function savePass() { alert("पासवर्ड सुरक्षित: " + document.getElementById('newPass').value); document.getElementById('newPass').value = ''; }
+    function saveUpdate() { alert("अपडेट कोड प्रोसेस हुआ!"); document.getElementById('updateCode').value = ''; }
+
+    function filterTable() { let val = document.getElementById("searchFarmer").value.toUpperCase(); let tr = document.getElementById("ledgerTable").getElementsByTagName("tr"); for (let i = 1; i < tr.length; i++) { let td = tr[i].getElementsByTagName("td")[1]; if (td) tr[i].style.display = td.textContent.toUpperCase().includes(val) ? "" : "none"; } }
+</script>
+</body>
+</html>
