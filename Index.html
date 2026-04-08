@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>अयांश डिजिटल बहीखाता</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; font-weight: bold; }
+        body { background: #f0f2f5; margin: 0; padding-bottom: 80px; color: #1a202c; }
+        
+        .header { background: linear-gradient(135deg, #002347, #004080); color: #ffcc00; padding: 18px; text-align: center; border-bottom: 4px solid #ffd700; position: relative; }
+        #logoDisplay { position: absolute; left: 15px; top: 10px; width: 55px; height: 55px; border-radius: 50%; border: 2px solid #fff; background: #fff; overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        #logoImg { width: 100%; height: 100%; object-fit: cover; }
+
+        .pin-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #001122; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #ffcc00; }
+        .pin-input { width: 200px; padding: 15px; text-align: center; font-size: 30px; border-radius: 15px; border: 2px solid #ffcc00; margin: 20px; outline: none; }
+
+        .card { background: white; margin: 15px; padding: 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border-top: 5px solid #004080; }
+        input { width: 100%; padding: 14px; margin: 8px 0; border: 1px solid #cbd5e0; border-radius: 12px; font-size: 18px; background: #f8fafc; }
+        
+        .mode-selector { display: flex; margin: 15px; gap: 10px; }
+        .mode-btn { flex: 1; padding: 15px; text-align: center; border-radius: 15px; background: #fff; border: 2px solid #004080; color: #004080; cursor: pointer; font-size: 18px; }
+        .mode-btn.active { background: #004080; color: #ffcc00; }
+
+        .shortcut-btns { display: flex; justify-content: space-between; gap: 4px; margin: 10px 0; }
+        .s-btn { background: #e2e8f0; border: 1.5px solid #004080; padding: 12px 2px; border-radius: 8px; font-size: 14px; color: #002347; cursor: pointer; flex: 1; text-align: center; }
+
+        .btn-main { background: #004080; color: #ffcc00; border: none; padding: 16px; border-radius: 15px; width: 100%; font-size: 22px; cursor: pointer; margin-top: 15px; box-shadow: 0 5px #001a33; }
+        .btn-plus { background: #28a745; color: white; border: 3px solid #fff; width: 70px; height: 70px; border-radius: 50%; font-size: 40px; cursor: pointer; margin: 15px auto; display: block; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+
+        .temp-box { background: #fffceb; border: 2px dashed #004080; padding: 15px; border-radius: 15px; margin-top: 15px; display: none; }
+        .temp-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 18px; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; }
+        .modal-body { background: white; width: 95%; margin: 5% auto; border-radius: 25px; padding: 20px; height: 90vh; display: flex; flex-direction: column; overflow: hidden; }
+        .scroll-area { flex: 1; overflow-y: auto; margin: 15px 0; border-radius: 15px; background: #f8fafc; padding: 10px; }
+
+        .nav-bar { position: fixed; bottom: 0; width: 100%; display: flex; background: #002347; height: 70px; border-top: 4px solid #ffcc00; }
+        .nav-link { flex: 1; display: flex; align-items: center; justify-content: center; color: white; text-decoration: none; font-size: 18px; }
+        .nav-link.active { background: #ffcc00; color: #002347; }
+        
+        .b-val { color: #d9534f; font-size: 22px; font-weight: 800; }
+    </style>
+</head>
+<body onload="initApp()">
+
+<div id="pinGate" class="pin-screen">
+    <div style="font-size: 60px;">🔐</div>
+    <h2>अयांश इंटरप्राइजेज</h2>
+    <input type="password" id="pLock" class="pin-input" placeholder="पिन कोड">
+    <button class="btn-main" style="width:200px;" onclick="unlock()">ऐप खोलें</button>
+</div>
+
+<div class="header">
+    <div id="logoDisplay" onclick="showSettings()">
+        <img id="logoImg" src="" style="display:none;">
+        <span id="logoTxt">AI</span>
+    </div>
+    <div style="font-size: 24px;">अयांश इंटरप्राइजेज</div>
+</div>
+
+<div id="page-entry">
+    <div class="mode-selector">
+        <div id="m-G" class="mode-btn active" onclick="setMode('G')">किसान</div>
+        <div id="m-D" class="mode-btn" onclick="setMode('D')">डिस्ट्रीब्यूटर</div>
+    </div>
+    <div class="card">
+        <input type="text" id="uName" placeholder="पार्टी का नाम...">
+        <input type="number" id="uMob" placeholder="मोबाइल नंबर">
+        <hr style="margin:15px 0; border:0; border-top:1px solid #eee;">
+        
+        <div class="shortcut-btns">
+            <span class="s-btn" onclick="setD('खाद')">खाद</span>
+            <span class="s-btn" onclick="setD('बीज')">बीज</span>
+            <span class="s-btn" onclick="setD('दवाई')">दवाई</span>
+            <span class="s-btn" onclick="setD('टूल्स')">टूल्स</span>
+            <span class="s-btn" onclick="setD('नकद')">नकद</span>
+        </div>
+        
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="rDesc" placeholder="विवरण...">
+            <input type="date" id="rDate" style="width:160px;">
+        </div>
+        <input type="number" id="rAmt" placeholder="रकम ₹">
+        <button class="btn-plus" onclick="addToTemp()">+</button>
+        
+        <div id="tempBox" class="temp-box">
+            <div id="tempList"></div>
+            <button class="btn-main" onclick="saveFinal()">खाते में पक्का जोड़ें ✅</button>
+        </div>
+    </div>
+</div>
+
+<div id="page-book" style="display:none;">
+    <div class="mode-selector">
+        <div id="v-G" class="mode-btn active" onclick="setView('G')">किसान बही</div>
+        <div id="v-D" class="mode-btn" onclick="setView('D')">पार्टी बही</div>
+    </div>
+    <div class="card"><input type="text" id="find" placeholder="नाम खोजें..." onkeyup="listUsers()"></div>
+    <div id="listBody"></div>
+</div>
+
+<div id="setPopup" class="modal">
+    <div class="modal-body">
+        <button onclick="closePop('setPopup')" style="float:right; background:red; color:white; border:none; padding:10px; border-radius:10px;">X</button>
+        <h3>⚙️ सेटिंग्स व बैकअप</h3>
+        <div style="background:#f8fafc; padding:15px; border-radius:15px; margin-bottom:15px; overflow-y:auto;">
+            <p>🖼️ लोगो: <input type="file" id="logoFile" accept="image/*" onchange="uploadLogo()"></p>
+            <hr>
+            <p>📲 बैकअप:</p>
+            <button class="btn-main" style="background:#4a5568; font-size:16px; margin-top:5px;" onclick="exportData()">डेटा कॉपी करें</button>
+            <button class="btn-main" style="background:#718096; font-size:16px; margin-top:5px;" onclick="importData()">डेटा पेस्ट करें</button>
+            <hr>
+            <p>📊 तारीख रिपोर्ट:</p>
+            <div style="display:flex; gap:5px;"><input type="date" id="dF"> <input type="date" id="dT"></div>
+            <button class="btn-main" style="padding:10px; font-size:16px;" onclick="getReport()">चेक करें</button>
+            <div id="repRes" style="margin-top:10px; font-size:14px; max-height:100px; overflow:auto; background:white; padding:5px;"></div>
+            <div id="repAct" style="display:none; gap:10px; margin-top:10px;">
+                <button onclick="shareRep()" style="flex:1; background:#25d366; color:white; border:none; padding:10px; border-radius:10px;">WhatsApp</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="userPopup" class="modal">
+    <div class="modal-body">
+        <button onclick="closePop('userPopup')" style="float:right; background:red; color:white; border:none; padding:10px; border-radius:10px;">X</button>
+        <h2 id="hName">नाम</h2>
+        <h2 id="hBal" style="color:#d9534f; text-align:center; font-size:40px;">₹0</h2>
+        <div class="scroll-area" id="hLogs"></div>
+        <input type="number" id="cashIn" placeholder="पैसा जमा ₹">
+        <div style="display:flex; gap:10px;">
+            <button onclick="payBill()" style="flex:1; background:#2f855a; color:white; border:none; padding:15px; border-radius:12px; font-size:18px;">जमा करें</button>
+            <button onclick="sendWA()" style="flex:1; background:#25d366; color:white; border:none; padding:15px; border-radius:12px; font-size:18px;">WhatsApp</button>
+        </div>
+        <button onclick="killAcc()" style="color:gray; border:none; background:none; margin-top:15px; font-size:12px;">❌ खाता नील करें</button>
+    </div>
+</div>
+
+<div class="nav-bar">
+    <div id="nav1" class="nav-link active" onclick="openNav('page-entry')">एंट्री</div>
+    <div id="nav2" class="nav-link" onclick="openNav('page-book')">खाता बुक</div>
+</div>
+
+<script>
+    let dbName = "Ayansh_V_Perfect_Master";
+    let db = JSON.parse(localStorage.getItem(dbName)) || { G:{}, D:{}, lgo:"", pin:"1234" };
+    let curM = 'G', viewM = 'G', temp = [], activeU = "", repTxt = "";
+
+    function save() { localStorage.setItem(dbName, JSON.stringify(db)); }
+    function initApp() { 
+        if(db.lgo) { document.getElementById('logoImg').src = db.lgo; document.getElementById('logoImg').style.display="block"; document.getElementById('logoTxt').style.display="none"; }
+        document.getElementById('rDate').valueAsDate = new Date(); 
+    }
+
+    function unlock() { if(document.getElementById('pLock').value === db.pin.toString()) document.getElementById('pinGate').style.display="none"; else alert("गलत पिन!"); }
+    
+    function uploadLogo() {
+        let file = document.getElementById('logoFile').files[0];
+        let reader = new FileReader();
+        reader.onloadend = () => { db.lgo = reader.result; save(); initApp(); alert("लोगो अपडेट!"); };
+        reader.readAsDataURL(file);
+    }
+
+    function exportData() { navigator.clipboard.writeText(JSON.stringify(db)); alert("डेटा कॉपी हुआ! अब इसे दूसरे फोन पर भेजें।"); }
+    function importData() { let d = prompt("डेटा पेस्ट करें:"); if(d) { db = JSON.parse(d); save(); location.reload(); } }
+
+    function setMode(m) { curM = m; document.getElementById('m-G').className = m==='G'?'mode-btn active':'mode-btn'; document.getElementById('m-D').className = m==='D'?'mode-btn active':'mode-btn'; }
+    function setView(m) { viewM = m; document.getElementById('v-G').className = m==='G'?'mode-btn active':'mode-btn'; document.getElementById('v-D').className = m==='D'?'mode-btn active':'mode-btn'; listUsers(); }
+    function setD(v) { document.getElementById('rDesc').value = v; }
+
+    function addToTemp() {
+        let ds = document.getElementById('rDesc').value, am = document.getElementById('rAmt').value, dt = document.getElementById('rDate').value;
+        if(!ds || !am) return alert("विवरण और रकम भरें!");
+        temp.push({ dt, ds, dr: parseFloat(am), cr: 0 });
+        document.getElementById('tempList').innerHTML = temp.map((i,idx)=>`<div class="temp-item">${i.ds} - ₹${i.dr} <span onclick="temp.splice(${idx},1);addToTemp()" style="color:red">🗑️</span></div>`).join('');
+        document.getElementById('tempBox').style.display="block";
+        document.getElementById('rDesc').value=""; document.getElementById('rAmt').value="";
+    }
+
+    function saveFinal() {
+        let n = document.getElementById('uName').value.trim();
+        if(!n || temp.length==0) return alert("नाम और एंट्री भरें!");
+        if(!db[curM][n]) db[curM][n] = { mob: document.getElementById('uMob').value, logs: [] };
+        db[curM][n].logs.push(...temp); 
+        db[curM][n].logs.sort((a,b) => new Date(a.dt) - new Date(b.dt)); // ऑटो तारीख सॉर्ट
+        save();
+        alert("खाते में जमा हुआ!"); temp = []; document.getElementById('tempBox').style.display="none";
+        document.getElementById('uName').value=""; document.getElementById('uMob').value="";
+    }
+
+    function listUsers() {
+        let c = document.getElementById('listBody'), s = document.getElementById('find').value.toLowerCase();
+        c.innerHTML = "";
+        for(let n in db[viewM]) {
+            if(n.toLowerCase().includes(s)) {
+                let b = db[viewM][n].logs.reduce((sum,l)=> sum+(l.dr-l.cr), 0);
+                c.insertAdjacentHTML('beforeend', `<div class="card" onclick="openHistory('${n}')" style="display:flex; justify-content:space-between; align-items:center; font-size:20px;"><b>${n}</b><span class="b-val">₹${b}</span></div>`);
+            }
+        }
+    }
+
+    function openHistory(n) { activeU = n; document.getElementById('hName').innerText = n; renderLogs(); document.getElementById('userPopup').style.display="block"; }
+    function renderLogs() {
+        let b = 0; let h = db[viewM][activeU].logs.map(l => { b += (l.dr-l.cr); return `<div class="temp-item"><span>${l.dt} ${l.ds}</span><b>${l.dr?'+'+l.dr:'-'+l.cr}</b></div>`; }).reverse().join('');
+        document.getElementById('hBal').innerText = "₹" + b; document.getElementById('hLogs').innerHTML = h;
+    }
+
+    function payBill() {
+        let a = parseFloat(document.getElementById('cashIn').value);
+        if(!a) return alert("रकम भरें!");
+        db[viewM][activeU].logs.push({ dt: new Date().toISOString().split('T')[0], ds: "नकद जमा", dr: 0, cr: a });
+        db[viewM][activeU].logs.sort((a,b) => new Date(a.dt) - new Date(b.dt));
+        save(); renderLogs(); document.getElementById('cashIn').value="";
+    }
+
+    function getReport() {
+        let f = document.getElementById('dF').value, t = document.getElementById('dT').value;
+        if(!f || !t) return alert("तारीख चुनें!");
+        let all = [];
+        ['G','D'].forEach(m => { for(let n in db[m]) db[m][n].logs.forEach(l => { if(l.dt>=f && l.dt<=t) all.push({n, ...l}); })});
+        all.sort((a,b)=>new Date(a.dt)-new Date(b.dt));
+        repTxt = `अयांश रिपोर्ट (${f} से ${t})\n\n`;
+        let h = "";
+        all.forEach(x => { let r = `${x.dt} | ${x.n} | ${x.ds} | ₹${x.dr||x.cr}`; h+=`• ${r}<br>`; repTxt+=`• ${r}\n`; });
+        document.getElementById('repRes').innerHTML = h || "कोई डेटा नहीं मिला।";
+        document.getElementById('repAct').style.display = all.length ? "flex" : "none";
+    }
+
+    function shareRep() { window.open(`https://wa.me/?text=${encodeURIComponent(repTxt)}`); }
+    function sendWA() {
+        let t = 0, txt = `अयांश इंटरप्राइजेज - हिसाब: ${activeU}\n\n`;
+        db[viewM][activeU].logs.forEach(l => { t += (l.dr-l.cr); txt += `• ${l.dt}: ${l.ds} ₹${l.dr||l.cr}\n`; });
+        txt += `\nकुल बकाया: ₹${t}`;
+        window.open(`https://wa.me/${db[viewM][activeU].mob}?text=${encodeURIComponent(txt)}`);
+    }
+
+    function openNav(p) { 
+        document.getElementById('page-entry').style.display=p==='page-entry'?'block':'none'; 
+        document.getElementById('page-book').style.display=p==='page-book'?'block':'none'; 
+        document.getElementById('nav1').className=p==='page-entry'?'nav-link active':'nav-link'; 
+        document.getElementById('nav2').className=p==='page-book'?'nav-link active':'nav-link'; 
+        if(p==='page-book') listUsers(); 
+    }
+    function showSettings() { document.getElementById('setPopup').style.display="block"; }
+    function closePop(id) { document.getElementById(id).style.display="none"; }
+    function killAcc() { if(confirm("खाता नील करें?")) if(confirm("पक्का?")) { delete db[viewM][activeU]; save(); closePop('userPopup'); listUsers(); } }
+</script>
+</body>
+</html>
