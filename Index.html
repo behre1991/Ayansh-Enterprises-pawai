@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Shop Heyar-Sheyar</title>
+    <style>
+        :root { --primary: #0d47a1; --bg: #f0f2f5; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); padding-bottom: 80px; }
+        
+        /* पिन लॉक */
+        #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); color: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        /* हेडर */
+        .header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .shop-logo-img { width: 40px; height: 40px; border-radius: 50%; background: white; object-fit: cover; }
+        
+        /* साइडबार */
+        .sidebar { position: fixed; top: 0; left: -100%; width: 85%; height: 100%; background: white; transition: 0.3s; z-index: 2000; overflow-y: auto; box-shadow: 5px 0 15px rgba(0,0,0,0.3); }
+        .sidebar.open { left: 0; }
+        .point { padding: 15px; border-bottom: 1px solid #eee; font-weight: bold; cursor: pointer; }
+
+        /* फॉर्म और कार्ड */
+        .container { padding: 15px; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .plus-btn { background: #2e7d32; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 24px; cursor: pointer; }
+
+        /* बॉटम नेविगेशन */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 2px solid var(--primary); height: 65px; }
+        .nav-item { flex: 1; text-align: center; padding: 10px 0; font-size: 12px; cursor: pointer; color: #555; }
+        .nav-item.active { color: var(--primary); background: #e3f2fd; font-weight: bold; }
+
+        .screen { display: none; }
+        .screen.active { display: block; }
+    </style>
+</head>
+<body onload="loadAppData()">
+
+    <div id="lockScreen">
+        <h2 id="displayShopName">Smart Shop Heyar-Sheyar</h2>
+        <input type="password" id="pinInput" placeholder="PIN दर्ज करें" style="width: 60%; text-align: center;">
+        <button class="btn-main" onclick="unlockApp()" style="width: 60%; margin-top: 10px; background: #ffd700; color: black;">प्रवेश करें</button>
+    </div>
+
+    <div class="header">
+        <div onclick="toggleMenu()" style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+            <img id="headerLogo" src="" class="shop-logo-img" style="display:none;">
+            <div id="logoInitial" style="background:white; color:var(--primary); padding:5px 10px; border-radius:5px; font-weight:bold;">SS</div>
+            <span id="headerShopName">स्मार्ट शॉप, शेर, शेर</span>
+        </div>
+        <div onclick="alert('वॉइस कमांड एक्टिव')" style="font-size: 24px; cursor:pointer;">🎤</div>
+    </div>
+
+    <div id="sideMenu" class="sidebar">
+        <div style="background:var(--primary); color:white; padding:25px;"><h3>प्रोफाइल सेटिंग्स</h3></div>
+        <div class="point" onclick="nav('shopSettings')">1. ⚙️ शॉप सेटिंग (नाम, लोगो, पता)</div>
+        <div class="point">2. 🌐 भाषा & वॉइस व्यवस्था</div>
+        <div class="point" onclick="nav('reports')">3. 📊 रिपोर्ट मास्टर (तारीख से तारीख)</div>
+        <div class="point">4. 📁 विभाग मास्टर (+)</div>
+        <div class="point" onclick="nav('securityPay')">5. 🔐 सुरक्षा & पेमेंट (QR/PIN/UPI)</div>
+        <div class="point">6. ✏️ सुधार सिस्टम</div>
+        <div class="point" onclick="nav('staff')">7. 👥 स्टाफ मैनेजमेंट</div>
+        <div class="point">8. 🆘 सपोर्ट & हेल्पलाइन</div>
+        <button onclick="toggleMenu()" class="btn-main" style="background:#555; margin:10px; width:90%;">वापस</button>
+    </div>
+
+    <div class="container" id="mainArea">
+        
+        <div id="billing" class="screen active">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h3>स्मार्ट बिलिंग</h3>
+                    <button class="plus-btn" onclick="clearBill()">+</button>
+                </div>
+                <input type="text" id="cName" placeholder="ग्राहक का नाम">
+                <input type="number" id="cMob" placeholder="मोबाइल नंबर">
+                <input type="date" id="bDate">
+                <hr>
+                <div style="display:flex; gap:5px;">
+                    <select id="itemDept" style="flex:1;"><option>विभाग</option><option>खाद</option><option>बीज</option><option>दवाई</option></select>
+                    <input type="text" id="iSearch" placeholder="सामान सर्च करें..." style="flex:2;" oninput="autoFill()">
+                </div>
+                <div style="display:flex; gap:5px;">
+                    <input type="number" id="iRate" placeholder="रेट" style="flex:1;">
+                    <input type="number" id="iQty" placeholder="मात्रा" style="flex:1;">
+                </div>
+                <textarea placeholder="दवाई का विवरण..."></textarea>
+                <button class="btn-main" onclick="alert('बिल शेयर हो गया!')">शेयर बिल (QR सहित) 📤</button>
+            </div>
+        </div>
+
+        <div id="shopSettings" class="screen">
+            <div class="card">
+                <h3>शॉप सेटिंग</h3>
+                <input type="text" id="setShopName" placeholder="दुकान का नया नाम">
+                <input type="text" id="setAddress" placeholder="दुकान का पता">
+                <p>लोगो चुनें:</p>
+                <input type="file" id="setLogo" accept="image/*" onchange="previewLogo(this)">
+                <button class="btn-main" onclick="saveSettings()">सेटिंग सेव करें</button>
+            </div>
+        </div>
+
+        <div id="securityPay" class="screen">
+            <div class="card">
+                <h3>सुरक्षा & पेमेंट</h3>
+                <input type="password" id="setPin" placeholder="नया PIN सेट करें">
+                <input type="text" id="setUpi" placeholder="UPI ID (नाम के साथ)">
+                <p>नया QR कोड फोटो:</p>
+                <input type="file" accept="image/*">
+                <button class="btn-main" onclick="saveSecurity()">सेव करें</button>
+            </div>
+        </div>
+
+        <div id="staff" class="screen">
+            <div class="card">
+                <h3>स्टाफ मैनेजमेंट</h3>
+                <input type="text" placeholder="लड़के का नाम">
+                <input type="text" placeholder="आधार नंबर">
+                <input type="number" placeholder="सैलरी">
+                <button class="btn-main">स्टाफ जोड़ें</button>
+            </div>
+        </div>
+        
+        <div id="reports" class="screen">
+            <div class="card">
+                <h3>तारीख से तारीख रिपोर्ट</h3>
+                <input type="date"> से <input type="date">
+                <button class="btn-main">रिपोर्ट निकालें</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="nav('billing', this)">📄<br>बिलिंग</div>
+        <div class="nav-item" onclick="nav('khata', this)">📖<br>खाता</div>
+        <div class="nav-item" onclick="nav('stock', this)">📦<br>स्टॉक</div>
+        <div class="nav-item" onclick="nav('inward', this)">🚚<br>आवक</div>
+        <div class="nav-item" onclick="nav('exp', this)">💰<br>दुकान खर्च</div>
+    </div>
+
+    <script>
+        let appData = { name: "स्मार्ट शॉप, शेर, शेर", pin: "1234", address: "", logo: "" };
+
+        function loadAppData() {
+            let saved = localStorage.getItem('smartShopData');
+            if(saved) {
+                appData = JSON.parse(saved);
+                document.getElementById('headerShopName').innerText = appData.name;
+                document.getElementById('displayShopName').innerText = appData.name;
+            }
+            document.getElementById('bDate').valueAsDate = new Date();
+        }
+
+        function unlockApp() {
+            if(document.getElementById('pinInput').value === appData.pin) {
+                document.getElementById('lockScreen').style.display = 'none';
+            } else { alert("गलत पिन!"); }
+        }
+
+        function saveSettings() {
+            appData.name = document.getElementById('setShopName').value || appData.name;
+            appData.address = document.getElementById('setAddress').value;
+            localStorage.setItem('smartShopData', JSON.stringify(appData));
+            alert("सेटिंग सेव हो गई! अब दुकान का नाम बदल गया है।");
+            location.reload();
+        }
+
+        function saveSecurity() {
+            appData.pin = document.getElementById('setPin').value || appData.pin;
+            localStorage.setItem('smartShopData', JSON.stringify(appData));
+            alert("पिन और पेमेंट जानकारी अपडेट हो गई!");
+        }
+
+        function nav(id, el) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(el) {
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                el.classList.add('active');
+            }
+            if(id !== 'billing') toggleMenu(false);
+        }
+
+        function toggleMenu(force) {
+            let m = document.getElementById('sideMenu');
+            if(force === false) m.classList.remove('open');
+            else m.classList.toggle('open');
+        }
+
+        function clearBill() {
+            document.querySelectorAll('#billing input').forEach(i => i.value = '');
+            alert("स्क्रीन साफ़ (+): नई एंट्री करें।");
+        }
+
+        function autoFill() {
+            let s = document.getElementById('iSearch').value;
+            if(s.toLowerCase() === "urea") { // उदाहरण के लिए
+                document.getElementById('itemDept').value = "खाद";
+                document.getElementById('iRate').value = "266";
+            }
+        }
+    </script>
+</body>
+</html>
