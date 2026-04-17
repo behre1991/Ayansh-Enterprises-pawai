@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Shop Master</title>
+    <style>
+        :root { --primary: #0d47a1; --bg: #f0f2f5; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); padding-bottom: 80px; user-select: none; }
+        #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); color: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .header { background: var(--primary); color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .sidebar { position: fixed; top: 0; left: -100%; width: 85%; height: 100%; background: white; transition: 0.3s; z-index: 2000; overflow-y: auto; box-shadow: 5px 0 15px rgba(0,0,0,0.3); }
+        .sidebar.open { left: 0; }
+        .menu-item { padding: 15px; border-bottom: 1px solid #eee; font-weight: bold; color: #333; cursor: pointer; }
+        .container { padding: 10px; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        input, select { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-size: 17px; font-weight: bold; cursor: pointer; }
+        .flex-box { display: flex; gap: 8px; align-items: center; margin: 5px 0; }
+        .calc-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; font-size: 20px; }
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 3px solid var(--primary); height: 75px; }
+        .nav-item { flex: 1; text-align: center; padding: 12px 0; font-size: 11px; cursor: pointer; color: #555; font-weight: bold; }
+        .nav-item.active { color: var(--primary); background: #e3f2fd; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .list-item { background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 5px; border-left: 5px solid var(--primary); display: flex; justify-content: space-between; }
+        .staff-card { border-left: 5px solid #2e7d32; margin-bottom: 10px; padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body onload="initApp()">
+
+    <div id="lockScreen">
+        <h2>Ayansh Enterprises</h2>
+        <input type="password" id="pinIn" placeholder="पिन (1234)" style="width: 60%; text-align: center;">
+        <button class="btn-main" onclick="unlock()" style="width: 60%; margin-top: 10px; background: #ffd700; color: black;">खोलें</button>
+    </div>
+
+    <div class="header">
+        <div onclick="toggleSidebar()" style="display:flex; align-items:center; gap:10px;">
+            <div style="background:white; color:var(--primary); padding:2px 8px; border-radius:5px; font-weight:bold;">SS</div>
+            <span id="hTitle">स्मार्ट शॉप, शेर, शेर</span>
+        </div>
+        <div>🎤</div>
+    </div>
+
+    <div id="sideMenu" class="sidebar">
+        <div style="background:var(--primary); color:white; padding:20px;"><h3>प्रोफाइल सेटिंग</h3></div>
+        <div class="menu-item" onclick="nav('p_staff')">7. 👥 स्टाफ मास्टर (जॉइनिंग/सैलरी)</div>
+        <div class="menu-item" onclick="nav('p_shop')">1. ⚙️ शॉप सेटिंग</div>
+        <button onclick="toggleSidebar()" class="btn-main" style="background:#444; margin:15px; width:90%;">वापस</button>
+    </div>
+
+    <div class="container">
+        
+        <div id="billing" class="screen active">
+            <div class="card">
+                <input type="date" id="bDate">
+                <input type="text" id="cName" placeholder="ग्राहक का नाम">
+                <input type="text" id="iName" placeholder="सामान का नाम">
+                <div class="flex-box">
+                    <input type="number" id="iRate" placeholder="रेट">
+                    <input type="number" id="iQty" placeholder="Qty">
+                    <button class="calc-btn" style="background:#2e7d32;" onclick="addItem()">+</button>
+                </div>
+                <div id="billItems" style="margin-top:10px;"></div>
+                <hr>
+                <div class="flex-box">
+                    <button class="calc-btn" style="background:#2e7d32;" onclick="adjust('plus')">+</button>
+                    <input type="number" id="adjAmt" placeholder="डिस्काउंट/प्लस" style="flex:2; text-align:center;">
+                    <button class="calc-btn" style="background:#d32f2f;" onclick="adjust('minus')">-</button>
+                </div>
+                <h3 style="text-align:right;">कुल बिल: ₹<span id="fTotal">0</span></h3>
+                <div class="flex-box">
+                    <button onclick="saveBill('नगद')" style="flex:1; background:green;" class="calc-btn">नगद</button>
+                    <button onclick="saveBill('उधार')" style="flex:1; background:orange;" class="calc-btn">उधार</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="inward" class="screen">
+            <div class="card">
+                <h3>🚚 सप्लायर & माल की आवक</h3>
+                <input type="text" placeholder="सप्लायर का नाम">
+                <input type="text" placeholder="सप्लायर का पता">
+                <select><option>विभाग (खाद/बीज/दवाई)</option></select>
+                <input type="text" placeholder="आइटम का नाम">
+                <div class="flex-box">
+                    <input type="number" placeholder="रेट" style="flex:1;">
+                    <input type="number" placeholder="GST %" style="flex:1;">
+                </div>
+                <div class="flex-box">
+                    <label style="flex:1; font-size:12px;">Mfd: <input type="date"></label>
+                    <label style="flex:1; font-size:12px;">Exp: <input type="date"></label>
+                </div>
+                <button class="btn-main" onclick="alert('स्टॉक अपडेट हुआ!')">स्टॉक में जोड़ें</button>
+            </div>
+        </div>
+
+        <div id="exp" class="screen">
+            <div class="card">
+                <h3>📅 स्टाफ हाजिरी & खाता</h3>
+                <select id="staffSelect" onchange="loadStaffCard()"><option>लड़का चुनें</option></select>
+                <div id="staffDetailCard"></div>
+                <div class="flex-box">
+                    <button onclick="markAttend(1)" style="background:green;" class="calc-btn">आया (Present)</button>
+                    <button onclick="markAttend(0)" style="background:red;" class="calc-btn">नहीं आया (Absent)</button>
+                </div>
+                <input type="number" id="payAmt" placeholder="पेमेंट दिया (₹)">
+                <button class="btn-main" onclick="saveStaffPay()">पेमेंट सेव करें</button>
+            </div>
+        </div>
+
+        <div id="p_staff" class="screen">
+            <div class="card">
+                <h3>👥 नया स्टाफ रजिस्टर करें</h3>
+                <input type="text" id="stName" placeholder="लड़के का नाम">
+                <input type="number" id="stSal" placeholder="महीने की सैलरी">
+                <input type="date" id="stJoin" title="जॉइनिंग तारीख">
+                <input type="number" id="stAadhar" placeholder="आधार नंबर">
+                <button class="btn-main" onclick="addStaff()">स्टाफ जोड़ें</button>
+            </div>
+            <div id="staffMasterList" class="container"></div>
+        </div>
+
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="nav('billing', this)">📄<br>बिलिंग</div>
+        <div class="nav-item" onclick="nav('khata', this)">📖<br>खाता</div>
+        <div class="nav-item" onclick="nav('stock', this)">📦<br>स्टॉक</div>
+        <div class="nav-item" onclick="nav('inward', this)">🚚<br>आवक</div>
+        <div class="nav-item" onclick="nav('exp', this)">💰<br>स्टाफ/खर्च</div>
+    </div>
+
+    <script>
+        let runningTotal = 0;
+        let finalTotal = 0;
+        let staffData = JSON.parse(localStorage.getItem('ss_staff')) || [];
+
+        function initApp() {
+            document.getElementById('bDate').valueAsDate = new Date();
+            updateStaffDropdown();
+            renderStaffMaster();
+        }
+
+        function unlock() {
+            if(document.getElementById('pinIn').value === "1234") document.getElementById('lockScreen').style.display='none';
+            else alert("गलत पिन!");
+        }
+
+        function toggleSidebar() { document.getElementById('sideMenu').classList.toggle('open'); }
+
+        function nav(id, el) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(el) {
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                el.classList.add('active');
+            }
+            toggleSidebar(false);
+        }
+
+        // --- बिलिंग वर्किंग ---
+        function addItem() {
+            let n = document.getElementById('iName').value;
+            let r = parseFloat(document.getElementById('iRate').value) || 0;
+            let q = parseFloat(document.getElementById('iQty').value) || 0;
+            if(n && r) {
+                let amt = r * q;
+                runningTotal += amt;
+                finalTotal = runningTotal;
+                document.getElementById('billItems').innerHTML += `<div class="list-item"><span>${n} (${q})</span> <b>₹${amt}</b></div>`;
+                document.getElementById('fTotal').innerText = finalTotal;
+                document.getElementById('iName').value=''; document.getElementById('iRate').value=''; document.getElementById('iQty').value='';
+            }
+        }
+
+        function adjust(type) {
+            let val = parseFloat(document.getElementById('adjAmt').value) || 0;
+            finalTotal = (type === 'plus') ? runningTotal + val : runningTotal - val;
+            document.getElementById('fTotal').innerText = finalTotal;
+        }
+
+        // --- स्टाफ वर्किंग (सैलरी/हाजिरी कैलकुलेशन) ---
+        function addStaff() {
+            let name = document.getElementById('stName').value;
+            let salary = parseFloat(document.getElementById('stSal').value);
+            if(name && salary) {
+                staffData.push({
+                    name: name,
+                    salary: salary,
+                    joinDate: document.getElementById('stJoin').value,
+                    aadhar: document.getElementById('stAadhar').value,
+                    daysPresent: 0,
+                    totalPaid: 0
+                });
+                localStorage.setItem('ss_staff', JSON.stringify(staffData));
+                alert("स्टाफ रजिस्टर हो गया!");
+                location.reload();
+            }
+        }
+
+        function updateStaffDropdown() {
+            let sel = document.getElementById('staffSelect');
+            staffData.forEach((s, i) => {
+                let opt = document.createElement('option');
+                opt.value = i;
+                opt.innerText = s.name;
+                sel.appendChild(opt);
+            });
+        }
+
+        function loadStaffCard() {
+            let idx = document.getElementById('staffSelect').value;
+            if(idx === "लड़का चुनें") return;
+            let s = staffData[idx];
+            let dailyWage = (s.salary / 30).toFixed(2);
+            let earned = (dailyWage * s.daysPresent).toFixed(2);
+            let balance = (earned - s.totalPaid).toFixed(2);
+            
+            document.getElementById('staffDetailCard').innerHTML = `
+                <div class="staff-card">
+                    <p><b>सैलरी:</b> ₹${s.salary} | <b>दिहाड़ी:</b> ₹${dailyWage}</p>
+                    <p><b>महीने की हाजिरी:</b> ${s.daysPresent} दिन</p>
+                    <p><b>कुल कमाई:</b> ₹${earned} | <b>दिया गया:</b> ₹${s.totalPaid}</p>
+                    <p style="color:red"><b>बचा हुआ (Balance): ₹${balance}</b></p>
+                </div>`;
+        }
+
+        function markAttend(val) {
+            let idx = document.getElementById('staffSelect').value;
+            if(idx !== "लड़का चुनें") {
+                staffData[idx].daysPresent += val;
+                localStorage.setItem('ss_staff', JSON.stringify(staffData));
+                alert("हाजिरी अपडेट हुई!");
+                loadStaffCard();
+            }
+        }
+
+        function saveStaffPay() {
+            let idx = document.getElementById('staffSelect').value;
+            let amt = parseFloat(document.getElementById('payAmt').value) || 0;
+            if(idx !== "लड़का चुनें" && amt > 0) {
+                staffData[idx].totalPaid += amt;
+                localStorage.setItem('ss_staff', JSON.stringify(staffData));
+                alert("पेमेंट अपडेट हुआ!");
+                document.getElementById('payAmt').value = '';
+                loadStaffCard();
+            }
+        }
+
+        function renderStaffMaster() {
+            let list = document.getElementById('staffMasterList');
+            staffData.forEach(s => {
+                list.innerHTML += `<div class="card"><b>${s.name}</b><br>जॉइनिंग: ${s.joinDate} | सैलरी: ₹${s.salary}</div>`;
+            });
+        }
+
+        function saveBill(mode) { alert(mode + " बिल सुरक्षित!"); location.reload(); }
+    </script>
+</body>
+</html>
