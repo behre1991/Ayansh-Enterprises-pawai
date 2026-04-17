@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Shop Heyar-Sheyar</title>
+    <style>
+        :root { --primary: #0d47a1; --accent: #ffcc00; --text: #333; }
+        body { font-family: 'Arial', sans-serif; margin: 0; background: #f0f2f5; padding-bottom: 80px; }
+        
+        /* Header */
+        .header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .logo-box { cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .mic-btn { font-size: 24px; cursor: pointer; background: rgba(255,255,255,0.2); padding: 8px; border-radius: 50%; }
+
+        /* Content Area */
+        .container { padding: 15px; }
+        .card { background: white; padding: 18px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 10px; font-size: 16px; box-sizing: border-box; }
+        
+        /* Navigation (Correct Order) */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 3px solid var(--primary); z-index: 1000; }
+        .nav-item { flex: 1; text-align: center; padding: 12px 5px; font-size: 11px; cursor: pointer; font-weight: bold; color: #555; }
+        .nav-item.active { color: var(--primary); background: #e3f2fd; }
+
+        /* Profile Sidebar (8 Points) */
+        .sidebar { position: fixed; top: 0; left: -100%; width: 80%; height: 100%; background: white; transition: 0.4s; z-index: 2000; overflow-y: auto; box-shadow: 5px 0 15px rgba(0,0,0,0.3); }
+        .sidebar.open { left: 0; }
+        .point { padding: 15px; border-bottom: 1px solid #eee; font-size: 16px; color: var(--text); display: flex; align-items: center; gap: 12px; }
+        .point:active { background: #f5f5f5; }
+
+        .btn-action { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; font-size: 17px; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        .plus-top { background: #2e7d32; color: white; border: none; width: 35px; height: 35px; border-radius: 50%; font-size: 20px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo-box" onclick="openMenu()">
+            <div style="background:white; color:var(--primary); padding:5px 10px; border-radius:8px; font-weight:bold;">SS</div>
+            <span style="font-size: 18px;">Smart Shop Heyar-Sheyar 🦁</span>
+        </div>
+        <div class="mic-btn" onclick="startVoice()">🎤</div>
+    </div>
+
+    <div id="sideMenu" class="sidebar">
+        <div style="background:var(--primary); color:white; padding:30px 20px;">
+            <h2>कंट्रोल सेंटर</h2>
+            <p>व्यवस्थित डिजिटल दुकान</p>
+        </div>
+        <div class="point">1. ⚙️ शॉप सेटिंग (लोगो, नाम, पता)</div>
+        <div class="point">2. 🌐 भाषा (Hindi, Marathi, English, Voice)</div>
+        <div class="point">3. 📅 रिपोर्ट मास्टर (तारीख से तारीख तक)</div>
+        <div class="point">4. 📁 विभाग मास्टर (+)</div>
+        <div class="point">5. 🔐 सुरक्षा & पेमेंट (QR, PIN, UPI)</div>
+        <div class="point">6. ✏️ सुधार सिस्टम (Delete/Undo)</div>
+        <div class="point">7. 👤 स्टाफ मैनेजमेंट (आधार, फोटो, सैलरी)</div>
+        <div class="point">8. 🆘 सपोर्ट & हेल्पलाइन</div>
+        <button class="btn-action" onclick="openMenu()" style="background:#555; margin: 20px; width: 85%;">बंद करें</button>
+    </div>
+
+    <div class="container" id="screen">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0;">स्मार्ट बिलिंग</h3>
+                <button class="plus-top" onclick="clearScreen()">+</button>
+            </div>
+            <input type="text" id="gName" placeholder="ग्राहक का नाम">
+            <input type="number" id="gMob" placeholder="मोबाइल नंबर">
+            <input type="text" placeholder="सामान का नाम (ऑटो-सर्च)" onfocus="voiceFeedback('सामान का नाम बोलिए')">
+            <div style="display:flex; gap:10px;">
+                <input type="text" placeholder="पैकिंग" style="flex:1;">
+                <input type="number" placeholder="रेट" style="flex:1;">
+            </div>
+            <textarea placeholder="विवरण (दवाई/अन्य)..."></textarea>
+            <button class="btn-action" onclick="shareBill()">शेयर बिल (QR + UPI) 📤</button>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="nav('bill')">📄<br>बिलिंग</div>
+        <div class="nav-item" onclick="nav('khata')">📖<br>खाता</div>
+        <div class="nav-item" onclick="nav('stock')">📦<br>स्टॉक</div>
+        <div class="nav-item" onclick="nav('inward')">🚚<br>आवक</div>
+        <div class="nav-item" onclick="nav('exp')">💰<br>दुकान खर्च</div>
+    </div>
+
+    <script>
+        function openMenu() { document.getElementById('sideMenu').classList.toggle('open'); }
+
+        function clearScreen() {
+            document.querySelectorAll('input, textarea').forEach(el => el.value = '');
+            voiceFeedback('स्क्रीन साफ़ कर दी गई है। नई एंट्री शुरू करें।');
+        }
+
+        function startVoice() { alert('वॉइस कमांड एक्टिव: बोलिए "स्टॉक दिखाओ" या "बिल बनाओ"'); }
+
+        function voiceFeedback(msg) { console.log(msg); }
+
+        function shareBill() {
+            alert('बिल तैयार! Smart Shop Heyar-Sheyar का QR कोड, नाम और UPI ID के साथ WhatsApp पर शेयर हो रहा है।');
+        }
+
+        function nav(page) {
+            const screen = document.getElementById('screen');
+            if(page === 'inward') {
+                screen.innerHTML = `
+                <div class="card">
+                    <h3>नया माल आवक</h3>
+                    <input type="text" placeholder="सप्लायर का नाम">
+                    <input type="number" placeholder="सप्लायर GST">
+                    <input type="text" placeholder="सप्लायर का पता">
+                    <select><option>विभाग (खाद/बीज/दवाई/अन्य)</option></select>
+                    <input type="text" placeholder="माल का नाम">
+                    <div style="display:flex; gap:10px;">
+                        <input type="number" placeholder="खरीद रेट">
+                        <input type="number" placeholder="बिक्री रेट">
+                    </div>
+                    <input type="number" placeholder="GST %">
+                    <input type="text" placeholder="एक्सपायरी डेट" onfocus="(this.type='date')">
+                    <button class="btn-action" onclick="alert('माल सुरक्षित चढ़ गया!')">सेव करें</button>
+                </div>`;
+            }
+            // अन्य पेजों के लिए यहाँ फंक्शन बढ़ेंगे...
+        }
+    </script>
+</body>
+</html>
