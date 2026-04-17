@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Shop Heyar-Sheyar</title>
+    <style>
+        :root { --primary: #0d47a1; --bg: #f0f2f5; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); padding-bottom: 80px; }
+        
+        /* हेडर */
+        .header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        
+        /* कार्ड और इनपुट */
+        .container { padding: 15px; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        
+        /* बिलिंग टेबल जैसी व्यवस्था */
+        .row { display: flex; gap: 8px; align-items: center; }
+        .flex-2 { flex: 2; }
+        .flex-1 { flex: 1; }
+
+        /* बटन व्यवस्था */
+        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-size: 17px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-clear { background: #d32f2f; color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin-bottom: 10px; }
+        
+        /* बॉटम नेविगेशन */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 2px solid var(--primary); height: 70px; }
+        .nav-item { flex: 1; text-align: center; padding: 12px 0; font-size: 12px; cursor: pointer; color: #555; font-weight: bold; }
+        .nav-item.active { color: var(--primary); background: #e3f2fd; }
+
+        .screen { display: none; }
+        .screen.active { display: block; }
+        
+        #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); color: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body onload="initApp()">
+
+    <div id="lockScreen">
+        <h2>Smart Shop Heyar-Sheyar 🦁</h2>
+        <input type="password" id="pinInput" placeholder="PIN दर्ज करें" style="width: 60%; text-align: center;">
+        <button class="btn-main" onclick="unlock()" style="width: 60%; background: #ffd700; color: black;">खोलें</button>
+    </div>
+
+    <div class="header">
+        <div onclick="alert('प्रोफाइल खुल रही है...')" style="cursor:pointer; display:flex; align-items:center; gap:10px;">
+            <div style="background:white; color:var(--primary); padding:5px 10px; border-radius:5px; font-weight:bold;">SS</div>
+            <span id="shopTitle">स्मार्ट शॉप, शेर, शेर</span>
+        </div>
+        <div onclick="alert('वॉइस एक्टिव')" style="font-size: 24px; cursor:pointer;">🎤</div>
+    </div>
+
+    <div class="container">
+        
+        <div id="billing" class="screen active">
+            <button class="btn-clear" onclick="clearBill()">+ नई बिलिंग शुरू करें (सफाई)</button>
+            
+            <div class="card">
+                <h3>1. ग्राहक की जानकारी</h3>
+                <input type="text" id="cName" placeholder="ग्राहक का नाम">
+                <input type="number" id="cMob" placeholder="मोबाइल नंबर">
+                <input type="date" id="bDate">
+            </div>
+
+            <div class="card">
+                <h3>2. सामान का विवरण</h3>
+                <div class="row">
+                    <select id="iDept" class="flex-1">
+                        <option>विभाग चुनें</option>
+                        <option>खाद</option>
+                        <option>बीज</option>
+                        <option>दवाई</option>
+                    </select>
+                    <input type="text" id="iName" placeholder="सामान का नाम" class="flex-2">
+                </div>
+                <div class="row">
+                    <input type="number" id="iRate" placeholder="रेट" class="flex-1" oninput="calculateTotal()">
+                    <input type="number" id="iQty" placeholder="मात्रा" class="flex-1" oninput="calculateTotal()">
+                </div>
+                <input type="text" id="iDetails" placeholder="विशेष विवरण (दवाई आदि के लिए)">
+            </div>
+
+            <div class="card">
+                <h3>3. पेमेंट हिसाब</h3>
+                <div class="row">
+                    <div class="flex-1">कुल रुपये: <b id="totalAmt">0</b></div>
+                    <input type="number" id="discount" placeholder="छूट (डिस्काउंट)" class="flex-1" oninput="calculateTotal()">
+                </div>
+                <div class="row" style="margin-top:10px;">
+                    <div class="flex-1">पक्का बिल: <b id="finalAmt" style="color:green; font-size:20px;">0</b></div>
+                </div>
+                <button class="btn-main" onclick="generateBill()">पक्का करें और शेयर करें 📤</button>
+            </div>
+        </div>
+
+        <div id="khata" class="screen"><div class="card"><h3>खाता व्यवस्था</h3></div></div>
+        <div id="stock" class="screen"><div class="card"><h3>स्टॉक और PDF</h3></div></div>
+        <div id="inward" class="screen"><div class="card"><h3>नया माल आवक</h3></div></div>
+        <div id="exp" class="screen"><div class="card"><h3>दुकान खर्च & स्टाफ</h3></div></div>
+
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="nav('billing', this)">📄<br>बिलिंग</div>
+        <div class="nav-item" onclick="nav('khata', this)">📖<br>खाता</div>
+        <div class="nav-item" onclick="nav('stock', this)">📦<br>स्टॉक</div>
+        <div class="nav-item" onclick="nav('inward', this)">🚚<br>आवक</div>
+        <div class="nav-item" onclick="nav('exp', this)">💰<br>दुकान खर्च</div>
+    </div>
+
+    <script>
+        function initApp() { document.getElementById('bDate').valueAsDate = new Date(); }
+
+        function unlock() {
+            if(document.getElementById('pinInput').value === "1234") {
+                document.getElementById('lockScreen').style.display = 'none';
+            } else { alert("गलत पिन!"); }
+        }
+
+        function calculateTotal() {
+            let r = document.getElementById('iRate').value || 0;
+            let q = document.getElementById('iQty').value || 0;
+            let d = document.getElementById('discount').value || 0;
+            let total = r * q;
+            document.getElementById('totalAmt').innerText = total;
+            document.getElementById('finalAmt').innerText = total - d;
+        }
+
+        function clearBill() {
+            document.querySelectorAll('input').forEach(i => i.value = '');
+            document.getElementById('totalAmt').innerText = '0';
+            document.getElementById('finalAmt').innerText = '0';
+            initApp();
+            alert("मैजिक प्लस: स्क्रीन साफ़! नई एंट्री के लिए तैयार।");
+        }
+
+        function nav(id, el) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+        }
+
+        function generateBill() {
+            let final = document.getElementById('finalAmt').innerText;
+            alert("बिल पक्का हो गया! कुल राशि: ₹" + final + "\nQR कोड के साथ व्हाट्सएप पर शेयर हो रहा है।");
+        }
+    </script>
+</body>
+</html>
