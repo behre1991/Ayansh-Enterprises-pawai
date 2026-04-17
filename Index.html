@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Shop Heyar-Sheyar</title>
+    <style>
+        :root { --primary: #0d47a1; --bg: #f4f7f6; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); padding-bottom: 80px; }
+        
+        /* पिन लॉक */
+        #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); color: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        /* हेडर */
+        .header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        
+        /* साइडबार */
+        .sidebar { position: fixed; top: 0; left: -100%; width: 85%; height: 100%; background: white; transition: 0.3s; z-index: 2000; overflow-y: auto; }
+        .sidebar.open { left: 0; }
+        .menu-item { padding: 15px; border-bottom: 1px solid #eee; font-weight: bold; color: #333; }
+
+        .container { padding: 10px; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        
+        input, select, textarea { width: 100%; padding: 12px; margin: 6px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
+        
+        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-size: 17px; font-weight: bold; cursor: pointer; }
+        
+        /* बिलिंग कैलकुलेशन बॉक्स */
+        .flex-box { display: flex; gap: 8px; align-items: center; margin: 10px 0; }
+        .calc-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; font-size: 20px; }
+
+        /* बॉटम नेविगेशन */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 3px solid var(--primary); height: 75px; }
+        .nav-item { flex: 1; text-align: center; padding: 12px 0; font-size: 11px; cursor: pointer; color: #555; font-weight: bold; }
+        .nav-item.active { color: var(--primary); background: #e3f2fd; }
+
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .list-area { background: #f9f9f9; padding: 10px; border-radius: 8px; margin-top: 10px; border: 1px dashed #bbb; font-size: 13px; }
+    </style>
+</head>
+<body onload="init()">
+
+    <div id="lockScreen">
+        <h2 id="lName">स्मार्ट शॉप, शेर, शेर</h2>
+        <input type="password" id="pinIn" placeholder="पिन डालें (1234)" style="width: 60%; text-align: center;">
+        <button class="btn-main" onclick="unlock()" style="width: 60%; margin-top:10px; background:#ffd700; color:#000;">प्रवेश</button>
+    </div>
+
+    <div class="header">
+        <div onclick="toggleSide()" style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+            <div style="background:white; color:var(--primary); padding:5px 10px; border-radius:5px; font-weight:bold;">SS</div>
+            <span id="hTitle">स्मार्ट शॉप, शेर, शेर</span>
+        </div>
+        <div>🎤</div>
+    </div>
+
+    <div id="sideMenu" class="sidebar">
+        <div style="background:var(--primary); color:white; padding:20px;"><h3>प्रोफाइल सेटिंग</h3></div>
+        <div class="menu-item" onclick="nav('p1')">1. ⚙️ शॉप सेटिंग</div>
+        <div class="menu-item">2. 🌐 भाषा & वॉइस</div>
+        <div class="menu-item" onclick="nav('p3')">3. 📊 रिपोर्ट मास्टर</div>
+        <div class="menu-item">4. 📁 विभाग मास्टर (+)</div>
+        <div class="menu-item">5. 🔐 सुरक्षा & पेमेंट</div>
+        <div class="menu-item">6. ✏️ सुधार सिस्टम</div>
+        <div class="menu-item" onclick="nav('p7')">7. 👥 स्टाफ मैनेजमेंट</div>
+        <div class="menu-item">8. 🆘 सपोर्ट</div>
+        <button onclick="toggleSide()" class="btn-main" style="background:#444; width:90%; margin:15px;">बंद</button>
+    </div>
+
+    <div class="container">
+        
+        <div id="billing" class="screen active">
+            <div class="card">
+                <input type="date" id="bDate">
+                <input type="text" id="cName" placeholder="ग्राहक का नाम">
+                <input type="number" id="cMob" placeholder="मोबाइल नंबर">
+            </div>
+            <div class="card">
+                <h3>सामान एंट्री</h3>
+                <input type="text" id="iName" placeholder="सामान का नाम">
+                <div class="flex-box">
+                    <input type="number" id="iRate" placeholder="रेट" style="flex:1;">
+                    <input type="number" id="iQty" placeholder="मात्रा" style="flex:1;">
+                </div>
+                <button class="btn-main" style="background:#2e7d32;" onclick="addItem()">+ आइटम जोड़ें</button>
+                <div id="billList" class="list-area">लिस्ट खाली है...</div>
+                <hr>
+                <div style="font-weight:bold; color:green;">कुल: ₹<span id="gTot">0</span></div>
+                
+                <div class="flex-box">
+                    <button class="calc-btn" style="background:#2e7d32;" onclick="calc('plus')">+</button>
+                    <input type="number" id="adj" placeholder="रुपये" style="flex:2; text-align:center;">
+                    <button class="calc-btn" style="background:#d32f2f;" onclick="calc('minus')">-</button>
+                </div>
+                
+                <div style="font-size:18px; font-weight:bold; color:#d32f2f;">पक्का बिल: ₹<span id="fTot">0</span></div>
+                
+                <div class="flex-box" style="margin-top:10px;">
+                    <button onclick="done('Cash')" style="flex:1; background:green;" class="calc-btn">नगद</button>
+                    <button onclick="done('Credit')" style="flex:1; background:orange;" class="calc-btn">उधार</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="khata" class="screen">
+            <div class="card"><h3>👥 ग्राहक खाता</h3><div class="list-area"></div></div>
+            <div class="card"><h3>🚚 सप्लायर खाता</h3><div class="list-area"></div></div>
+        </div>
+
+        <div id="stock" class="screen"><div class="card"><h3>📦 लाइव स्टॉक</h3><div class="list-area"></div></div></div>
+
+        <div id="inward" class="screen">
+            <div class="card">
+                <h3 style="color:#0d47a1;">🚚 सप्लायर कुंडली</h3>
+                <input type="text" placeholder="सप्लायर का नाम">
+                <input type="text" placeholder="सप्लायर का पता">
+                <input type="number" placeholder="मोबाइल नंबर">
+                <input type="text" placeholder="सप्लायर का GST नंबर">
+            </div>
+            <div class="card">
+                <h3 style="color:#2e7d32;">📦 आवक माल विवरण</h3>
+                <select>
+                    <option>विभाग चुनें</option>
+                    <option>खाद</option>
+                    <option>बीज</option>
+                    <option>दवाई</option>
+                    <option>मशीनरी</option>
+                </select>
+                <input type="text" placeholder="सामान का नाम">
+                <div class="flex-box">
+                    <input type="text" placeholder="पैकिंग (उदा. 50kg)" style="flex:1;">
+                    <input type="number" placeholder="कितना आया (Qty)" style="flex:1;">
+                </div>
+                <div class="flex-box">
+                    <input type="number" placeholder="खरीद रेट" style="flex:1;">
+                    <input type="number" placeholder="जीएसटी %" style="flex:1;">
+                </div>
+                <div style="display:flex; gap:5px;">
+                    <label style="flex:1; font-size:12px;">Mfd: <input type="date"></label>
+                    <label style="flex:1; font-size:12px;">Exp: <input type="date"></label>
+                </div>
+                <button class="btn-main" style="margin-top:10px;">स्टॉक में जमा करें (Save)</button>
+            </div>
+        </div>
+
+        <div id="exp" class="screen">
+            <div class="card">
+                <h3>👥 स्टाफ हिसाब</h3>
+                <select><option>लड़का चुनें</option><option>अजय</option><option>विजय</option></select>
+                <input type="number" placeholder="कितना पैसा दिया">
+                <button class="btn-main" style="background:#d32f2f;">सेव करें</button>
+            </div>
+            <div class="card">
+                <h3>🏠 अन्य खर्च</h3>
+                <select><option>बिजली बिल</option><option>किराया</option><option>चाय-पानी</option></select>
+                <input type="number" placeholder="रुपये">
+                <button class="btn-main">सेव करें</button>
+            </div>
+        </div>
+
+        <div id="p1" class="screen"><div class="card"><h3>⚙️ शॉप सेटिंग</h3><input type="text" id="sn" placeholder="दुकान का नाम"><button class="btn-main" onclick="saveS()">अपडेट</button></div></div>
+        <div id="p7" class="screen"><div class="card"><h3>👥 स्टाफ मैनेजमेंट</h3><input type="file" accept="image/*"><input type="text" placeholder="नाम"><input type="number" placeholder="आधार"><button class="btn-main">रजिस्टर</button></div></div>
+
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="nav('billing', this)">📄<br>बिलिंग</div>
+        <div class="nav-item" onclick="nav('khata', this)">📖<br>खाता</div>
+        <div class="nav-item" onclick="nav('stock', this)">📦<br>स्टॉक</div>
+        <div class="nav-item" onclick="nav('inward', this)">🚚<br>आवक</div>
+        <div class="nav-item" onclick="nav('exp', this)">💰<br>खर्च</div>
+    </div>
+
+    <script>
+        let runningTotal = 0;
+        let finalTotal = 0;
+        let config = JSON.parse(localStorage.getItem('ss_cfg')) || { name: "स्मार्ट शॉप, शेर, शेर", pin: "1234" };
+
+        function init() {
+            document.getElementById('hTitle').innerText = config.name;
+            document.getElementById('lName').innerText = config.name;
+            document.getElementById('bDate').valueAsDate = new Date();
+        }
+
+        function unlock() {
+            if(document.getElementById('pinIn').value === config.pin) document.getElementById('lockScreen').style.display='none';
+            else alert("गलत पिन!");
+        }
+
+        function toggleSide() { document.getElementById('sideMenu').classList.toggle('open'); }
+
+        function nav(id, el) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(el) {
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                el.classList.add('active');
+            }
+            toggleSide(false);
+        }
+
+        function addItem() {
+            let n = document.getElementById('iName').value;
+            let r = document.getElementById('iRate').value;
+            let q = document.getElementById('iQty').value;
+            if(n && r && q) {
+                let amt = r * q;
+                runningTotal += amt;
+                finalTotal = runningTotal;
+                document.getElementById('billList').innerHTML += `• ${n} - ₹${amt}<br>`;
+                document.getElementById('gTot').innerText = runningTotal;
+                document.getElementById('fTot').innerText = finalTotal;
+                document.getElementById('iName').value=''; document.getElementById('iRate').value=''; document.getElementById('iQty').value='';
+            }
+        }
+
+        function calc(type) {
+            let val = parseFloat(document.getElementById('adj').value) || 0;
+            if(type === 'plus') finalTotal = runningTotal + val;
+            else finalTotal = runningTotal - val;
+            document.getElementById('fTot').innerText = finalTotal;
+        }
+
+        function done(mode) {
+            alert(mode + " बिल पक्का हुआ! राशि: ₹" + finalTotal);
+            location.reload();
+        }
+
+        function saveS() {
+            config.name = document.getElementById('sn').value || config.name;
+            localStorage.setItem('ss_cfg', JSON.stringify(config));
+            location.reload();
+        }
+    </script>
+</body>
+</html>
