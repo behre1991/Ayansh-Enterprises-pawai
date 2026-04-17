@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayansh Enterprises - Master App</title>
+    <style>
+        :root { --p: #0d47a1; --s: #2e7d32; --bg: #f4f7f6; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); padding-bottom: 80px; }
+        
+        /* पिन लॉक */
+        #lock { position: fixed; inset: 0; background: var(--p); color: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        
+        .header { background: var(--p); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .sidebar { position: fixed; top: 0; left: -100%; width: 85%; height: 100%; background: white; transition: 0.3s; z-index: 2000; overflow-y: auto; box-shadow: 5px 0 15px rgba(0,0,0,0.3); }
+        .sidebar.open { left: 0; }
+        .m-item { padding: 15px; border-bottom: 1px solid #eee; font-weight: bold; cursor: pointer; }
+
+        .container { padding: 10px; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 15px; border-left: 5px solid var(--p); }
+        
+        input, select { width: 100%; padding: 12px; margin: 5px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .btn { background: var(--p); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
+        
+        .f-row { display: flex; gap: 8px; align-items: center; margin: 5px 0; }
+        .c-btn { flex: 1; padding: 15px; border: none; border-radius: 8px; color: white; font-weight: bold; font-size: 20px; }
+
+        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 3px solid var(--p); }
+        .n-item { flex: 1; text-align: center; padding: 15px 0; font-size: 11px; font-weight: bold; color: #666; }
+        .n-item.active { color: var(--p); background: #e3f2fd; }
+
+        .scr { display: none; }
+        .scr.active { display: block; }
+        .list { background: #f9f9f9; padding: 10px; border-radius: 8px; margin: 10px 0; font-size: 14px; }
+        .stock-tag { background: #e8f5e9; color: #1b5e20; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+    </style>
+</head>
+<body onload="init()">
+
+    <div id="lock">
+        <h2>Ayansh Enterprises</h2>
+        <input type="password" id="pin" placeholder="PIN (1234)" style="width:60%; text-align:center;">
+        <button class="btn" onclick="unl()" style="width:60%; margin-top:10px; background:#ffd700; color:000;">खोलें</button>
+    </div>
+
+    <div class="header">
+        <div onclick="tglS()">☰ <span id="hT">स्मार्ट शॉप</span></div>
+        <div id="uStatus" style="font-size:12px; background:white; color:var(--p); padding:2px 6px; border-radius:4px;">Ready</div>
+    </div>
+
+    <div id="menu" class="sidebar">
+        <div style="background:var(--p); color:white; padding:20px;"><h3>प्रोफाइल सेटिंग</h3></div>
+        <div class="m-item" onclick="nav('p_shop')">1. ⚙️ शॉप सेटिंग</div>
+        <div class="m-item" onclick="nav('p_staff')">7. 👥 स्टाफ मास्टर (KYC/Salary)</div>
+        <div class="m-item">अन्य 6 पॉइंट्स (Active)</div>
+        <button onclick="tglS()" class="btn" style="background:#444; width:90%; margin:15px;">बंद करें</button>
+    </div>
+
+    <div class="container">
+        
+        <div id="billing" class="scr active">
+            <div class="card">
+                <h3>📄 नया बिल</h3>
+                <input type="date" id="bDate">
+                <input type="text" id="cName" placeholder="ग्राहक का नाम">
+                <select id="iSel" onchange="updateRate()">
+                    <option value="">सामान चुनें (स्टॉक से)</option>
+                </select>
+                <div class="f-row">
+                    <input type="number" id="iRate" placeholder="रेट" style="flex:1;">
+                    <input type="number" id="iQty" placeholder="Qty" style="flex:1;">
+                    <button class="c-btn" style="background:var(--s);" onclick="addI()">+</button>
+                </div>
+                <div id="bList" class="list">बिल खाली है...</div>
+                <div class="f-row">
+                    <button class="c-btn" style="background:var(--s);" onclick="adj('p')">+</button>
+                    <input type="number" id="adjA" placeholder="डिस्काउंट" style="flex:2; text-align:center;">
+                    <button class="c-btn" style="background:#d32f2f;" onclick="adj('m')">-</button>
+                </div>
+                <h3 style="text-align:right;">कुल: ₹<span id="fTot">0</span></h3>
+                <button class="btn" onclick="saveB()">बिल फाइनल करें (स्टॉक घटेगा)</button>
+            </div>
+        </div>
+
+        <div id="stock" class="scr">
+            <div class="card">
+                <h3>📦 वर्तमान स्टॉक</h3>
+                <div id="sList" class="list">स्टॉक खाली है...</div>
+            </div>
+        </div>
+
+        <div id="inward" class="scr">
+            <div class="card">
+                <h3>🚚 माल आवक (Inward)</h3>
+                <input type="text" id="sName" placeholder="सप्लायर का नाम">
+                <select id="iDept"><option>बीज</option><option>खाद</option><option>दवाई</option></select>
+                <input type="text" id="inItem" placeholder="आइटम का नाम">
+                <div class="f-row">
+                    <input type="number" id="inRate" placeholder="खरीद रेट">
+                    <input type="number" id="inQty" placeholder="मात्रा (Qty)">
+                </div>
+                <div class="f-row">
+                    <label style="flex:1; font-size:12px;">Mfd: <input type="date" id="inMfd"></label>
+                    <label style="flex:1; font-size:12px;">Exp: <input type="date" id="inExp"></label>
+                </div>
+                <button class="btn" style="background:var(--s);" onclick="saveIn()">स्टॉक में जमा करें</button>
+            </div>
+        </div>
+
+        <div id="exp" class="scr">
+            <div class="card">
+                <h3>💰 स्टाफ का खाता</h3>
+                <select id="stSel" onchange="ldSt()"><option value="">लड़का चुनें</option></select>
+                <div id="stBox" class="list">हिसाब यहाँ दिखेगा...</div>
+                <div class="f-row">
+                    <button class="c-btn" style="background:var(--s);" onclick="att(1)">आया (P)</button>
+                    <button class="c-btn" style="background:#d32f2f;" onclick="att(0)">नहीं आया (A)</button>
+                </div>
+                <input type="number" id="pAmt" placeholder="कितना पैसा दिया (₹)">
+                <button class="btn" onclick="pSt()">पेमेंट सेव करें</button>
+            </div>
+        </div>
+
+        <div id="p_staff" class="scr">
+            <div class="card">
+                <h3>👥 नया स्टाफ रजिस्टर</h3>
+                <input type="file" id="stPh" accept="image/*">
+                <input type="text" id="stN" placeholder="नाम">
+                <input type="number" id="stS" placeholder="महीने की सैलरी">
+                <input type="date" id="stJ" title="जॉइनिंग">
+                <button class="btn" onclick="regSt()">स्टाफ सुरक्षित करें</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="nav">
+        <div class="n-item active" onclick="nav('billing', this)">📄 बिलिंग</div>
+        <div class="n-item" onclick="nav('stock', this)">📦 स्टॉक</div>
+        <div class="n-item" onclick="nav('inward', this)">🚚 आवक</div>
+        <div class="n-item" onclick="nav('exp', this)">💰 स्टाफ</div>
+    </div>
+
+    <script>
+        // --- डेटा स्टोरेज (एक-दूसरे से लिंक) ---
+        let db = JSON.parse(localStorage.getItem('ayansh_db')) || {
+            stock: [], // {name, qty, rate, dept, exp}
+            staff: [], // {name, sal, att, paid}
+            bills: []
+        };
+
+        function init() {
+            document.getElementById('bDate').valueAsDate = new Date();
+            updStkDrops();
+            updStfDrops();
+            rnStk();
+        }
+
+        function unl() {
+            if(document.getElementById('pin').value==="1234") document.getElementById('lock').style.display='none';
+            else alert("गलत पिन!");
+        }
+
+        function tglS() { document.getElementById('menu').classList.toggle('open'); }
+
+        function nav(id, el) {
+            document.querySelectorAll('.scr').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(el) {
+                document.querySelectorAll('.n-item').forEach(n => n.classList.remove('active'));
+                el.classList.add('active');
+            }
+            tglS(false);
+        }
+
+        // --- 1. आवक -> स्टॉक (लिंक) ---
+        function saveIn() {
+            let name = document.getElementById('inItem').value;
+            let qty = parseFloat(document.getElementById('inQty').value);
+            let rate = parseFloat(document.getElementById('inRate').value);
+            if(!name || !qty) return alert("नाम और मात्रा भरें!");
+
+            let exist = db.stock.find(i => i.name === name);
+            if(exist) {
+                exist.qty += qty;
+                exist.rate = rate; // अपडेट रेट
+            } else {
+                db.stock.push({ name, qty, rate, dept: document.getElementById('iDept').value, exp: document.getElementById('inExp').value });
+            }
+            save();
+            alert("स्टॉक अपडेट हुआ!");
+            location.reload();
+        }
+
+        // --- 2. स्टॉक -> बिलिंग (लिंक) ---
+        function updStkDrops() {
+            let sel = document.getElementById('iSel');
+            db.stock.forEach((item, idx) => {
+                sel.innerHTML += `<option value="${idx}">${item.name} (बचा: ${item.qty})</option>`;
+            });
+        }
+
+        function updateRate() {
+            let idx = document.getElementById('iSel').value;
+            if(idx !== "") document.getElementById('iRate').value = db.stock[idx].rate;
+        }
+
+        let currB = 0;
+        let bItems = [];
+        function addI() {
+            let idx = document.getElementById('iSel').value;
+            let qty = parseFloat(document.getElementById('iQty').value);
+            if(idx === "" || !qty) return alert("सामान और मात्रा चुनें!");
+            
+            let sItem = db.stock[idx];
+            if(qty > sItem.qty) return alert("स्टॉक कम है! सिर्फ " + sItem.qty + " बचा है।");
+
+            let amt = sItem.rate * qty;
+            currB += amt;
+            bItems.push({idx, qty, amt});
+            document.getElementById('bList').innerHTML += `<div>${sItem.name} x ${qty} = ₹${amt}</div>`;
+            document.getElementById('fTot').innerText = currB;
+        }
+
+        function saveB() {
+            if(bItems.length === 0) return;
+            // स्टॉक घटाना (लिंकिंग)
+            bItems.forEach(item => {
+                db.stock[item.idx].qty -= item.qty;
+            });
+            save();
+            alert("बिल सेव और स्टॉक अपडेट!");
+            location.reload();
+        }
+
+        // --- 3. स्टाफ कैलकुलेशन ---
+        function regSt() {
+            let n = document.getElementById('stN').value;
+            let s = parseFloat(document.getElementById('stS').value);
+            if(n && s) {
+                db.staff.push({ name: n, sal: s, att: 0, paid: 0 });
+                save();
+                alert("स्टाफ सेव!");
+                location.reload();
+            }
+        }
+
+        function updStfDrops() {
+            let sel = document.getElementById('stSel');
+            db.staff.forEach((s, i) => { sel.innerHTML += `<option value="${i}">${s.name}</option>`; });
+        }
+
+        function ldSt() {
+            let i = document.getElementById('stSel').value;
+            if(i==="") return;
+            let s = db.staff[i];
+            let earned = Math.round((s.sal / 30) * s.att);
+            document.getElementById('stBox').innerHTML = `
+                <b>हाजिरी:</b> ${s.att} दिन | <b>कमाई:</b> ₹${earned}<br>
+                <b>दिया गया:</b> ₹${s.paid} | <b>बचा: ₹${earned - s.paid}</b>
+            `;
+        }
+
+        function att(v) {
+            let i = document.getElementById('stSel').value;
+            if(i==="") return;
+            db.staff[i].att += v;
+            save(); ldSt();
+        }
+
+        function pSt() {
+            let i = document.getElementById('stSel').value;
+            let a = parseFloat(document.getElementById('pAmt').value) || 0;
+            if(i==="") return;
+            db.staff[i].paid += a;
+            save(); ldSt();
+            document.getElementById('pAmt').value = '';
+        }
+
+        function rnStk() {
+            let div = document.getElementById('sList');
+            db.stock.forEach(i => {
+                div.innerHTML += `<div class="f-row"><b>${i.name}</b> <span class="stock-tag">${i.qty} बचा</span> <span>₹${i.rate}</span></div>`;
+            });
+        }
+
+        function save() { localStorage.setItem('ayansh_db', JSON.stringify(db)); }
+        function adj(t) {
+            let v = parseFloat(document.getElementById('adjA').value) || 0;
+            let final = (t === 'p') ? currB + v : currB - v;
+            document.getElementById('fTot').innerText = final;
+        }
+    </script>
+</body>
+</html>
