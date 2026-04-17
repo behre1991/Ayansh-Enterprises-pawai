@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Shop Heyar-Sheyar</title>
+    <style>
+        :root { --primary: #0d47a1; --bg: #f0f2f5; }
+        body { font-family: sans-serif; margin: 0; background: var(--bg); padding-bottom: 70px; }
+        
+        /* Header & Sidebar */
+        .header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .sidebar { position: fixed; top: 0; left: -100%; width: 85%; height: 100%; background: white; transition: 0.3s; z-index: 2000; overflow-y: auto; box-shadow: 5px 0 15px rgba(0,0,0,0.3); }
+        .sidebar.open { left: 0; }
+        .point { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; font-weight: bold; }
+        
+        /* Screens */
+        .screen { display: none; padding: 15px; }
+        .screen.active { display: block; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        
+        /* Inputs & Buttons */
+        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn-main { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; width: 100%; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .plus-btn { background: #2e7d32; color: white; border: none; width: 40px; height: 40px; border-radius: 50%; font-size: 24px; cursor: pointer; }
+
+        /* Bottom Nav */
+        .nav-bar { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 2px solid var(--primary); height: 65px; }
+        .nav-item { flex: 1; text-align: center; padding: 10px 0; font-size: 12px; cursor: pointer; color: #555; }
+        .nav-item.active { color: var(--primary); background: #e3f2fd; font-weight: bold; }
+
+        /* Lock Screen */
+        #lockScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); color: white; z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    </style>
+</head>
+<body onload="checkLock()">
+
+    <div id="lockScreen">
+        <h2 id="lockTitle">Smart Shop Heyar-Sheyar 🦁</h2>
+        <input type="password" id="pinInput" placeholder="अपना PIN डालें" style="width: 60%; text-align: center;">
+        <button class="btn-main" onclick="unlock()" style="width: 60%; margin-top: 10px;">खोलें</button>
+    </div>
+
+    <div class="header">
+        <div onclick="toggleMenu()" style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+            <div style="background:white; color:var(--primary); padding:5px 10px; border-radius:5px; font-weight:bold;">SS</div>
+            <span>स्मार्ट शॉप, शेर, शेर</span>
+        </div>
+        <div onclick="voiceAlert()" style="font-size: 24px; cursor:pointer;">🎤</div>
+    </div>
+
+    <div id="sideMenu" class="sidebar">
+        <div style="background:var(--primary); color:white; padding:25px;"><h3>सेटिंग्स</h3></div>
+        <div class="point" onclick="alert('शॉप सेटिंग: नाम-पता बदलें')">1. ⚙️ शॉप सेटिंग</div>
+        <div class="point" onclick="alert('भाषा: हिंदी/मराठी चुनें')">2. 🌐 भाषा & वॉइस</div>
+        <div class="point" onclick="showReport()">3. 📊 रिपोर्ट मास्टर (तारीख से तारीख)</div>
+        <div class="point" onclick="alert('विभाग मास्टर: खाद/बीज जोड़ें')">4. 📁 विभाग मास्टर (+)</div>
+        <div class="point" onclick="changePin()">5. 🔐 सुरक्षा & पेमेंट (QR/PIN)</div>
+        <div class="point" onclick="alert('सुधार: पुरानी एंट्री बदलें')">6. ✏️ सुधार सिस्टम</div>
+        <div class="point" onclick="manageStaff()">7. 👥 स्टाफ मैनेजमेंट</div>
+        <div class="point" onclick="alert('हेल्पलाइन: 9876543210')">8. 🆘 सपोर्ट & हेल्पलाइन</div>
+        <button onclick="toggleMenu()" class="btn-main" style="background:#555; margin:10px; width:90%;">वापस</button>
+    </div>
+
+    <div id="billing" class="screen active">
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center;"><h3>बिलिंग</h3><button class="plus-btn" onclick="clearBill()">+</button></div>
+            <input type="text" id="custName" placeholder="ग्राहक का नाम">
+            <input type="number" id="custMob" placeholder="मोबाइल नंबर">
+            <input type="text" placeholder="सामान का नाम (ऑटो-सर्च)">
+            <textarea placeholder="दवाई का विवरण..."></textarea>
+            <button class="btn-main" onclick="shareBill()">शेयर बिल (QR + UPI) 📤</button>
+        </div>
+    </div>
+
+    <div id="khata" class="screen">
+        <div class="card"><h3>खाता (Ledger)</h3><p>ग्राहक और सप्लायर का हिसाब यहाँ दिखेगा।</p></div>
+    </div>
+
+    <div id="stock" class="screen">
+        <div class="card">
+            <h3>स्टॉक रिपोर्ट</h3>
+            <button class="btn-main" style="background:#2e7d32;" onclick="alert('PDF डाउनलोड हो रही है...')">PDF / प्रिंट निकालें</button>
+        </div>
+    </div>
+
+    <div id="inward" class="screen">
+        <div class="card">
+            <h3>नया माल (आवक)</h3>
+            <input type="text" placeholder="सप्लायर का नाम">
+            <input type="number" placeholder="सप्लायर GST">
+            <input type="number" placeholder="खरीद रेट">
+            <input type="number" placeholder="बिक्री रेट">
+            <input type="date" title="Exp Date">
+            <button class="btn-main">सेव करें</button>
+        </div>
+    </div>
+
+    <div id="exp" class="screen">
+        <div class="card"><h3>दुकान खर्च & स्टाफ</h3><p>चाय, बिजली और स्टाफ का पैसा यहाँ मैनेज करें।</p></div>
+    </div>
+
+    <div class="nav-bar">
+        <div class="nav-item active" onclick="nav('billing', this)">📄<br>बिलिंग</div>
+        <div class="nav-item" onclick="nav('khata', this)">📖<br>खाता</div>
+        <div class="nav-item" onclick="nav('stock', this)">📦<br>स्टॉक</div>
+        <div class="nav-item" onclick="nav('inward', this)">🚚<br>आवक</div>
+        <div class="nav-item" onclick="nav('exp', this)">💰<br>दुकान खर्च</div>
+    </div>
+
+    <script>
+        let correctPin = "1234"; // डिफॉल्ट पिन
+
+        function checkLock() { document.getElementById('lockScreen').style.display = 'flex'; }
+        
+        function unlock() {
+            let val = document.getElementById('pinInput').value;
+            if(val === correctPin) {
+                document.getElementById('lockScreen').style.display = 'none';
+            } else { alert("गलत पिन!"); }
+        }
+
+        function toggleMenu() { document.getElementById('sideMenu').classList.toggle('open'); }
+
+        function nav(id, el) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            el.classList.add('active');
+        }
+
+        function clearBill() {
+            document.getElementById('custName').value = '';
+            document.getElementById('custMob').value = '';
+            alert("स्क्रीन साफ़ (Clean) कर दी गई है!");
+        }
+
+        function showReport() {
+            let d1 = prompt("शुरुआत तारीख (DD-MM-YYYY):");
+            let d2 = prompt("अंतिम तारीख (DD-MM-YYYY):");
+            alert(d1 + " से " + d2 + " तक की रिपोर्ट तैयार है।");
+        }
+
+        function shareBill() {
+            alert("QR कोड + UPI ID (Smart Shop Heyar-Sheyar) व्हाट्सएप पर शेयर हो रहा है...");
+        }
+
+        function changePin() {
+            let p = prompt("नया PIN सेट करें:");
+            if(p) { correctPin = p; alert("पिन बदल गया!"); }
+        }
+        
+        function voiceAlert() { alert("वॉइस कमांड एक्टिव है... बोलिए!"); }
+
+        function manageStaff() {
+            alert("स्टाफ: राहुल (हाजिर), सैलरी बकाया: ₹2000");
+        }
+    </script>
+</body>
+</html>
