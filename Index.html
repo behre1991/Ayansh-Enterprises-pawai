@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>अयांश डिजिटल मास्टर प्रो</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root { --primary: #00264d; --secondary: #ffcc00; --bg: #f0f2f5; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 0; }
+        .tab-content { display: none; padding-bottom: 100px; }
+        .tab-content.active { display: block; }
+        .app-header { background: linear-gradient(135deg, #00264d 0%, #004080 100%); border-bottom: 4px solid var(--secondary); }
+        #lock-screen { background: #00264d; z-index: 9999; position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="lock-screen">
+        <h1 class="text-4xl font-bold mb-6 text-yellow-400">अयांश डिजिटल</h1>
+        <p class="mb-4 text-white">आगे बढ़ने के लिए पिन दर्ज करें</p>
+        <input type="password" id="appPin" placeholder="PIN" class="p-3 rounded text-black text-center text-2xl w-40 mb-4" maxlength="4">
+        <button onclick="unlockApp()" class="bg-yellow-500 text-blue-900 font-bold px-10 py-3 rounded-full text-lg shadow-xl">अनलॉक करें</button>
+    </div>
+
+    <div id="main-app" class="hidden">
+        
+        <header class="app-header text-white p-4 text-center sticky top-0 shadow-lg z-40">
+            <h1 class="text-xl font-bold uppercase tracking-widest">अयांश डिजिटल मास्टर</h1>
+            <p class="text-[10px] text-yellow-300">स्मार्ट व्यापार समाधान</p>
+        </header>
+
+        <main class="p-4">
+            
+            <div id="billing" class="tab-content active">
+                <div id="bill-to-print" class="bg-white p-5 rounded-xl shadow-md border-t-4 border-blue-900">
+                    <div class="flex justify-between items-start mb-4">
+                        <h2 class="font-bold text-lg text-blue-900">नया बिल #<span id="billNo">001</span></h2>
+                        <input type="date" id="billDate" class="border text-sm p-1 rounded">
+                    </div>
+
+                    <div class="space-y-3">
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="custName" placeholder="ग्राहक का नाम" class="border p-2 rounded-lg w-full text-sm">
+                            <input type="number" id="custMob" placeholder="मोबाइल नंबर" class="border p-2 rounded-lg w-full text-sm">
+                        </div>
+                        
+                        <div class="bg-gray-50 p-3 rounded-lg border">
+                            <div class="grid grid-cols-3 gap-2 mb-2">
+                                <input type="text" id="itemName" placeholder="आइटम" class="border p-2 rounded col-span-2 text-sm">
+                                <input type="number" id="itemQty" placeholder="मात्रा" class="border p-2 rounded text-sm">
+                            </div>
+                            <div class="grid grid-cols-4 gap-2">
+                                <input type="number" id="itemRate" placeholder="रेट" class="border p-2 rounded text-sm col-span-3">
+                                <button onclick="addItem()" class="bg-blue-900 text-white rounded-lg font-bold text-xl">+</button>
+                            </div>
+                        </div>
+
+                        <div id="billItemsList" class="mt-4 space-y-2 border-t pt-3">
+                            </div>
+
+                        <div class="mt-4 p-4 bg-blue-50 border-2 border-blue-900 rounded-lg flex justify-between items-center">
+                            <span class="font-bold text-blue-900">कुल योग:</span>
+                            <span id="grandTotal" class="text-2xl font-black text-blue-900">₹ 0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <button onclick="downloadBill()" class="bg-gray-800 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2">
+                        📥 PDF डाउनलोड
+                    </button>
+                    <button onclick="shareWhatsApp()" class="bg-green-600 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2">
+                        WhatsApp शेयर
+                    </button>
+                </div>
+                <button onclick="resetBill()" class="w-full mt-3 text-red-600 font-semibold text-sm">नया बिल शुरू करें (Clear All)</button>
+            </div>
+
+            <div id="stock" class="tab-content">
+                <h2 class="font-bold text-lg mb-4 text-blue-900">स्टॉक इन्वेंटरी</h2>
+                <div class="bg-white rounded-xl shadow overflow-hidden">
+                    <table class="w-full text-sm">
+                        <thead class="bg-blue-900 text-white">
+                            <tr><th class="p-3 text-left">आइटम</th><th class="p-3 text-center">स्टॉक</th><th class="p-3 text-right">रेट</th></tr>
+                        </thead>
+                        <tbody id="stockList" class="divide-y">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="settings" class="tab-content">
+                <h2 class="font-bold text-lg mb-4 text-red-700">प्रोफ़ाइल सेटिंग</h2>
+                <div class="bg-white p-4 rounded-xl shadow">
+                    <div class="space-y-3">
+                        <input type="text" id="shopName" placeholder="दुकान का नाम" class="border p-3 w-full rounded-lg">
+                        <input type="text" id="shopAddress" placeholder="पता" class="border p-3 w-full rounded-lg">
+                        <button onclick="saveSettings()" class="w-full bg-blue-900 text-white p-3 rounded-lg font-bold">सेव करें</button>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <nav class="fixed bottom-0 w-full bg-white border-t-2 border-blue-900 flex justify-around p-3 shadow-2xl z-50">
+            <button onclick="showTab('billing', this)" class="nav-btn flex flex-col items-center text-blue-900">
+                <span class="text-xl">📄</span><span class="text-[10px] font-bold">बिलिंग</span>
+            </button>
+            <button onclick="showTab('stock', this)" class="nav-btn flex flex-col items-center text-gray-400">
+                <span class="text-xl">📦</span><span class="text-[10px] font-bold">स्टॉक</span>
+            </button>
+            <button onclick="showTab('settings', this)" class="nav-btn flex flex-col items-center text-gray-400">
+                <span class="text-xl">⚙️</span><span class="text-[10px] font-bold">सेटिंग</span>
+            </button>
+        </nav>
+    </div>
+
+    <script>
+        let billTotal = 0;
+        let itemsArray = [];
+
+        // ऐप अनलॉक
+        function unlockApp() {
+            const pin = document.getElementById('appPin').value;
+            if(pin === "1234") {
+                document.getElementById('lock-screen').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                initApp();
+            } else {
+                alert("गलत पिन!");
+            }
+        }
+
+        // टैब कंट्रोल
+        function showTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.replace('text-blue-900', 'text-gray-400'));
+            btn.classList.replace('text-gray-400', 'text-blue-900');
+        }
+
+        // बिल में आइटम जोड़ें
+        function addItem() {
+            const name = document.getElementById('itemName').value;
+            const qty = parseFloat(document.getElementById('itemQty').value);
+            const rate = parseFloat(document.getElementById('itemRate').value);
+
+            if(!name || !qty || !rate) return alert("पूरी जानकारी भरें!");
+
+            const total = qty * rate;
+            billTotal += total;
+            
+            const itemObj = { name, qty, rate, total };
+            itemsArray.push(itemObj);
+
+            renderItems();
+            updateGrandTotal();
+
+            // Clear inputs
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemQty').value = '';
+            document.getElementById('itemRate').value = '';
+        }
+
+        function renderItems() {
+            const list = document.getElementById('billItemsList');
+            list.innerHTML = '';
+            itemsArray.forEach((item, index) => {
+                list.innerHTML += `
+                    <div class="flex justify-between items-center bg-gray-50 p-2 rounded border">
+                        <div>
+                            <p class="font-bold text-sm">${item.name}</p>
+                            <p class="text-xs text-gray-500">${item.qty} x ₹${item.rate}</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold">₹${item.total}</span>
+                            <button onclick="removeItem(${index})" class="text-red-500 font-bold px-2">✕</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function removeItem(index) {
+            billTotal -= itemsArray[index].total;
+            itemsArray.splice(index, 1);
+            renderItems();
+            updateGrandTotal();
+        }
+
+        function updateGrandTotal() {
+            document.getElementById('grandTotal').innerText = "₹ " + billTotal;
+        }
+
+        // PDF डाउनलोड फंक्शन
+        function downloadBill() {
+            const element = document.getElementById('bill-to-print');
+            const opt = {
+                margin: 10,
+                filename: `Bill_${Date.now()}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+
+        // WhatsApp शेयर
+        function shareWhatsApp() {
+            const name = document.getElementById('custName').value || "Customer";
+            const mobile = document.getElementById('custMob').value;
+            let text = `*अयांश डिजिटल मास्टर - बिल*\n---------------------------\nग्राहक: ${name}\n`;
+            itemsArray.forEach(i => {
+                text += `${i.name}: ${i.qty} x ${i.rate} = ₹${i.total}\n`;
+            });
+            text += `---------------------------\n*कुल देय राशि: ₹${billTotal}*\nधन्यवाद!`;
+            
+            const encodedText = encodeURIComponent(text);
+            const url = `https://wa.me/${mobile}?text=${encodedText}`;
+            window.open(url, '_blank');
+        }
+
+        function resetBill() {
+            if(confirm("क्या आप बिल साफ़ करना चाहते हैं?")) {
+                itemsArray = [];
+                billTotal = 0;
+                renderItems();
+                updateGrandTotal();
+                document.getElementById('custName').value = '';
+                document.getElementById('custMob').value = '';
+            }
+        }
+
+        function initApp() {
+            document.getElementById('billDate').valueAsDate = new Date();
+            // यहाँ आप LocalStorage से डेटा लोड कर सकते हैं
+        }
+
+        function saveSettings() {
+            const shop = document.getElementById('shopName').value;
+            localStorage.setItem('shopName', shop);
+            alert("सेटिंग्स सुरक्षित कर दी गई हैं!");
+        }
+    </script>
+</body>
+</html>
