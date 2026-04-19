@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>अयंश एंटरप्राइजेज - मास्टर कंट्रोल</title>
+    <style>
+        :root { --main: #1a5f7a; --sec: #27ae60; --err: #e74c3c; --bg: #f4f7f6; --white: #ffffff; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #333; overflow-x: hidden; }
+
+        /* सुरक्षा लॉक */
+        #lockScreen { position: fixed; inset: 0; background: var(--main); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .pin-box { background: var(--white); padding: 30px; border-radius: 25px; width: 300px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.4); }
+        .pin-box input { width: 100%; padding: 12px; margin: 15px 0; border: 2px solid #ddd; border-radius: 12px; font-size: 30px; text-align: center; letter-spacing: 12px; outline: none; }
+
+        /* हेडर और 9 प्रोफाइल पॉइंट्स */
+        header { background: var(--main); color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; height: 60px; box-sizing: border-box; }
+        .logo { width: 42px; height: 42px; background: white; border-radius: 50%; color: var(--main); display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; border: 2px solid #fff; }
+        #profPop { display: none; position: fixed; top: 65px; left: 10px; background: white; width: 280px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 2000; overflow: hidden; border: 1px solid #ddd; }
+        .m-item { width: 100%; padding: 12px 15px; border: none; border-bottom: 1px solid #eee; text-align: left; background: none; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 10px; }
+
+        .page { display: none; padding: 15px; padding-bottom: 350px; }
+        .active { display: block !important; }
+        .card { background: var(--white); padding: 15px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #eee; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+        
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 8px; width: 100%; box-sizing: border-box; font-size: 14px; outline: none; }
+        .btn-main { background: var(--sec); color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; width: 100%; cursor: pointer; font-size: 16px; transition: 0.2s; }
+        .btn-main:active { transform: scale(0.98); }
+
+        /* बिलिंग लिस्ट */
+        .bill-card { border-left: 6px solid var(--main); position: relative; padding: 12px; margin-bottom: 10px; background: #fff; border-radius: 8px; }
+        .edit-tag { position: absolute; top: 8px; right: 8px; background: #f39c12; color: white; padding: 3px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; }
+        .qty-ctrl { display: flex; align-items: center; gap: 12px; background: #f8f9fa; padding: 8px; border-radius: 8px; margin-top: 10px; }
+        .q-btn { width: 35px; height: 35px; border: none; background: var(--main); color: white; border-radius: 6px; font-size: 20px; cursor: pointer; }
+
+        /* बिलिंग फुटर */
+        .bill-footer { position: fixed; bottom: 75px; width: 100%; background: white; border-top: 3px solid var(--main); padding: 12px; box-sizing: border-box; z-index: 999; }
+        .adj-area { display: flex; align-items: center; justify-content: center; gap: 10px; background: #fdf2f2; padding: 8px; border-radius: 10px; margin-bottom: 8px; border: 1px dashed var(--err); }
+
+        nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #ddd; height: 75px; z-index: 1000; }
+        nav button { flex: 1; border: none; background: none; font-size: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #7f8c8d; cursor: pointer; }
+        nav button.act { color: var(--main); font-weight: bold; border-top: 4px solid var(--main); }
+        
+        .st-badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; color: white; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="lockScreen"><div class="pin-box"><h3>अयंश एंटरप्राइजेज</h3><input type="password" id="pIn" maxlength="4" placeholder="****" oninput="vP()"></div></div>
+
+<div id="app" style="display:none;">
+    <header><div class="logo" onclick="tP()">S</div><b id="shN">अयंश एंटरप्राइजेज</b><span>19/04/2026</span></header>
+
+    <div id="profPop">
+        [span_5](start_span)<button class="m-item" onclick="oS('p-set')">⚙️ शॉप सेटिंग (नाम/GST/QR)[span_5](end_span)</button>
+        [span_6](start_span)<button class="m-item" onclick="oS('p-dept')">📁 विभाग मास्टर[span_6](end_span)</button>
+        [span_7](start_span)<button class="m-item" onclick="oS('p-staff')">👥 स्टाफ मास्टर (KYC/पद)[span_7](end_span)</button>
+        [span_8](start_span)<button class="m-item" onclick="oS('p-rep')">📊 रिपोर्ट मास्टर (सालाना/GST)[span_8](end_span)</button>
+        [span_9](start_span)<button class="m-item" onclick="oS('p-edit')">✏️ सुधार सिस्टम (Edit)[span_9](end_span)</button>
+        [span_10](start_span)<button class="m-item" onclick="oS('p-sec')">🔐 सुरक्षा व PIN रिसेट[span_10](end_span)</button>
+        <button class="m-item" onclick="oS('p-lang')">🌐 भाषा और वॉइस</button>
+        <button class="m-item" onclick="oS('p-supp')">🆘 सपोर्ट</button>
+        <button class="m-item" onclick="oS('p-help')">❓ हेल्प (9th Point)</button>
+    </div>
+
+    <div id="pg-bill" class="page active">
+        <div class="card">
+            [span_11](start_span)<h4>👤 ग्राहक पहचान[span_11](end_span)</h4>
+            <input type="text" id="cN" placeholder="ग्राहक का नाम (अनिवार्य)">
+            <div class="grid" style="margin-top:8px;"><input type="number" id="cM" placeholder="मोबाइल (अनिवार्य)"><input type="text" id="cA" placeholder="पता"></div>
+        </div>
+        <div class="card">
+            [span_12](start_span)<h4>🛒 एंट्री लेआउट[span_12](end_span)</h4>
+            <div class="grid"><select id="bD"><option>विभाग चुनें</option><option>खाद</option><option>बीज</option><option>दवाई</option></select><input type="text" id="bI" placeholder="सामान का नाम"></div>
+            [span_13](start_span)<div class="grid"><input type="number" id="bQ" placeholder="मात्रा (Qty)[span_13](end_span)[span_14](start_span)"><input type="number" id="bR" placeholder="रेट[span_14](end_span)"></div>
+            <div class="grid"><select id="bGST"><option value="0">GST 0%</option><option value="5">GST 5%</option><option value="12">GST 12%</option><option value="18">GST 18%</option></select><b style="padding:10px; color:var(--main);" id="gstShow">Tax: ₹0</b></div>
+            [span_15](start_span)<button class="btn-main" onclick="addB()">+ सामान जोड़ें (कॉलम खाली[span_15](end_span))</button>
+        </div>
+        <div id="bList"></div>
+        <div class="bill-footer">
+            <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:13px;"><span>सामान + GST:</span><span id="sT">₹0</span></div>
+            <div class="adj-area">
+                [span_16](start_span)<button class="q-btn" style="height:30px; width:30px; background:var(--err);" onclick="adj(-10)">-[span_16](end_span)</button>
+                <input type="number" id="adjV" value="0" style="width:70px; text-align:center; font-weight:bold;" oninput="cF()">
+                [span_17](start_span)<button class="q-btn" style="height:30px; width:30px;" onclick="adj(10)">+[span_17](end_span)</button>
+            </div>
+            [span_18](start_span)<div style="display:flex; justify-content:space-between; font-size:22px; color:var(--main);"><b>पक्का योग:[span_18](end_span)</b><b id="fT">₹0</b></div>
+            <div style="display:flex; gap:5px; margin-top:8px;">
+                [span_19](start_span)<button class="btn-main" style="background:var(--err); flex:1;" onclick="sav('उधार')">उधार[span_19](end_span)</button>
+                <button class="btn-main" style="flex:1;" onclick="sav('नकद')">नकद</button>
+                <button class="btn-main" style="background:var(--main); flex:1;" onclick="window.print()">प्रिंट/शेयर</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pg-khata" class="page">
+        <div class="card">
+            [span_20](start_span)<h3>📖 ग्राहक, सप्लायर और वापसी[span_20](end_span)</h3>
+            [span_21](start_span)<button class="btn-main" style="background:var(--main); margin-bottom:8px;">👥 ग्राहक खाता (उधारी/फोटो)[span_21](end_span)</button>
+            [span_22](start_span)<button class="btn-main" style="background:var(--main); margin-bottom:15px;">🚚 सप्लायर खाता (Phone Pe/GPay)[span_22](end_span)</button>
+            <hr>
+            [span_23](start_span)<h4>🔄 माल वापसी[span_23](end_span)</h4>
+            <div class="grid"><input type="text" placeholder="नाम"><input type="number" placeholder="मोबाइल"></div>
+            <input type="text" placeholder="सामान का नाम" style="margin-bottom:8px;">
+            <div class="grid"><input type="number" placeholder="मात्रा"><input type="number" placeholder="रेट"></div>
+            [span_24](start_span)<button class="btn-main" style="background:var(--err)">वापसी दर्ज करें[span_24](end_span)</button>
+        </div>
+    </div>
+
+    <div id="pg-inw" class="page">
+        <div class="card">
+            [span_25](start_span)<h4>🚚 आवक (सप्लायर कुंडली)[span_25](end_span)</h4>
+            [span_26](start_span)<input type="text" placeholder="सप्लायर का नाम (अनिवार्य)[span_26](end_span)">
+            [span_27](start_span)<div class="grid" style="margin-top:8px;"><input type="number" placeholder="मोबाइल[span_27](end_span)[span_28](start_span)"><input type="text" placeholder="GST नंबर[span_28](end_span)"></div>
+            [span_29](start_span)<input type="text" placeholder="सप्लायर एड्रेस[span_29](end_span)" style="margin-top:8px;">
+            <hr style="margin:15px 0;">
+            <input type="text" placeholder="दवाई/सामान का नाम">
+            <div class="grid"><input type="text" placeholder="पैकिंग"><input type="number" placeholder="मात्रा"></div>
+            <button class="btn-main" style="background:var(--main)">+ स्टॉक जोड़ें</button>
+        </div>
+    </div>
+
+    <div id="pg-exp" class="page">
+        <div class="card">
+            [span_30](start_span)<h4>🏪 दुकान खर्च व वर्कर सैलरी मैनेजमेंट[span_30](end_span)</h4>
+            
+            <div style="background:#eef; padding:15px; border-radius:10px; border:1px solid var(--main);">
+                [span_31](start_span)<h5>👷 कर्मी (लड़के) का हिसाब[span_31](end_span)</h5>
+                <select id="stfSel"><option>वर्कर का नाम चुनें</option><option>रोहन (मैनेजर)</option></select>
+                <div class="grid" style="margin-top:10px;">
+                    <div>
+                        [span_32](start_span)<small>हाजिरी (P/A)[span_32](end_span)</small>
+                        <select id="stfAtt"><option value="1">आया (Present)</option><option value="0">नहीं आया (Absent)</option></select>
+                    </div>
+                    <div>
+                        <small>पद (Role)</small>
+                        <input type="text" value="मैनेजर" readonly>
+                    </div>
+                </div>
+                <div class="grid">
+                    <input type="number" id="stfAdv" placeholder="एडवांस दिया">
+                    <input type="text" id="stfReas" placeholder="कारण (चाय/अन्य)">
+                </div>
+                
+                <div style="background:white; padding:10px; border-radius:8px; margin-top:10px; font-size:12px;">
+                    [span_33](start_span)<b>सैलरी कैलकुलेटर (30 दिन)[span_33](end_span):</b><br>
+                    कुल सैलरी: ₹15,000 | प्रतिदिन: ₹500<br>
+                    <span style="color:var(--err);">काटे गए दिन: 2 | कटौती: ₹1000</span><br>
+                    <span style="color:var(--sec);">एडवांस लिया: ₹500 | अब देय: ₹13,500</span>
+                </div>
+                [span_34](start_span)<button class="btn-main" style="font-size:14px; margin-top:10px;" onclick="alert('वर्कर डेटा अपडेट हुआ')">वर्कर हिसाब सेव करें[span_34](end_span)</button>
+            </div>
+            
+            <hr style="margin:20px 0;">
+            [span_35](start_span)<input type="text" placeholder="अन्य खर्च (बिजली/किराया/चाय)[span_35](end_span)">
+            <input type="number" placeholder="रकम">
+            [span_36](start_span)<button class="btn-main" style="margin-top:10px;">सामान्य खर्च सेव करें[span_36](end_span)</button>
+        </div>
+    </div>
+
+    <div id="p-staff" class="page">
+        <div class="card">
+            [span_37](start_span)<h3>👥 स्टाफ मास्टर (KYC + पद)[span_37](end_span)</h3>
+            <input type="text" placeholder="नाम">
+            <select style="margin:8px 0;"><option>पद: मैनेजर</option><option>पद: वर्कर</option></select>
+            [span_38](start_span)<div class="grid"><input type="number" placeholder="मोबाइल[span_38](end_span)[span_39](start_span)"><input type="text" placeholder="[Aadhaar Redacted][span_39](end_span)"></div>
+            [span_40](start_span)<div class="grid"><input type="number" placeholder="सैलरी[span_40](end_span)[span_41](start_span)"><input type="date" title="जॉइनिंग[span_41](end_span)"></div>
+            [span_42](start_span)<button class="btn-main">स्टाफ सेव करें[span_42](end_span)</button>
+        </div>
+    </div>
+
+    <nav>
+        <button onclick="nv('pg-bill', this)" class="act">📄 बिलिंग</button>
+        <button onclick="nv('pg-khata', this)">📖 खाता</button>
+        <button onclick="nv('pg-stock', this)">📦 स्टॉक</button>
+        <button onclick="nv('pg-inw', this)">🚚 आवक</button>
+        <button onclick="nv('pg-exp', this)">🏪 खर्च</button>
+    </nav>
+</div>
+
+<script>
+    let bItems = []; let sTotal = 0;
+
+    function vP() { if(document.getElementById('pIn').value==='1234'){ document.getElementById('lockScreen').style.display='none'; document.getElementById('app').style.display='block'; }}
+    function nv(id, b) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('nav button').forEach(nb=>nb.classList.remove('act')); b.classList.add('act'); document.getElementById('profPop').style.display='none'; window.scrollTo(0,0); }
+    function tP() { let m = document.getElementById('profPop'); m.style.display = (m.style.display==='block')?'none':'block'; }
+    function oS(id) { document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); if(document.getElementById(id)) document.getElementById(id).classList.add('active'); document.getElementById('profPop').style.display='none'; }
+
+    function addB() {
+        let n = document.getElementById('bI').value, q = parseFloat(document.getElementById('bQ').value), r = parseFloat(document.getElementById('bR').value), g = parseFloat(document.getElementById('bGST').value);
+        if(!n || !q || !r) return;
+        let tax = (q * r * g) / 100;
+        bItems.push({ n, q, r, g, tax });
+        renderB();
+        [span_43](start_span)// कॉलम खाली (Blueprint[span_43](end_span))
+        document.getElementById('bI').value=''; document.getElementById('bQ').value=''; document.getElementById('bR').value='';
+    }
+
+    function renderB() {
+        let area = document.getElementById('bList'); area.innerHTML = ""; sTotal = 0;
+        bItems.forEach((it, i) => {
+            let sum = (it.q * it.r) + it.tax; sTotal += sum;
+            [span_44](start_span)area.innerHTML += `<div class="bill-card"><span class="edit-tag" onclick="editB(${i})">एडिट (Edit)[span_44](end_span)</span><b>${it.n}</b> (GST ${it.g}%)<br><div class="qty-ctrl"><button class="q-btn" onclick="upQ(${i},-1)">-</button><b style="width:40px; text-align:center;">${it.q}</b><button class="q-btn" onclick="upQ(${i},1)">+</button><span style="margin-left:auto; font-weight:bold; color:var(--sec);">₹${sum.toFixed(2)}</span></div></div>`;
+        });
+        cF();
+    }
+
+    function editB(i) {
+        let it = bItems[i]; document.getElementById('bI').value = it.n; document.getElementById('bQ').value = it.q; document.getElementById('bR').value = it.r;
+        bItems.splice(i, 1); renderB();
+    }
+
+    function upQ(i, v) { bItems[i].q += v; if(bItems[i].q<=0) bItems.splice(i,1); else { bItems[i].tax = (bItems[i].q * bItems[i].r * bItems[i].g) / 100; } renderB(); }
+    function adj(v) { document.getElementById('adjV').value = (parseFloat(document.getElementById('adjV').value) || 0) + v; cF(); }
+    function cF() {
+        let adjustment = parseFloat(document.getElementById('adjV').value) || 0;
+        document.getElementById('sT').innerText = "₹" + sTotal.toFixed(2);
+        document.getElementById('fT').innerText = "₹" + (sTotal + adjustment).toFixed(2);
+    }
+
+    function sav(t) {
+        if(bItems.length===0) return;
+        alert("बिल " + t + " में सेव हुआ। स्टॉक और खाता अपडेट।");
+        bItems = []; document.getElementById('adjV').value = 0; renderB();
+    }
+</script>
+</body>
+</html>
