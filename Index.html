@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>आयांश एंटरप्राइजेज - मास्टर ईआरपी</title>
+    <style>
+        /* 🎨 हैवी डिजाइन और विस्तृत CSS */
+        :root { --p: #004d40; --s: #1b5e20; --err: #b71c1c; --bg: #f2f7f5; --white: #ffffff; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { margin: 0; background: var(--bg); color: #212121; padding-bottom: 100px; }
+
+        /* 🔐 पिन सुरक्षा स्क्रीन - फिक्स्ड लॉगिन */
+        #lockScreen { position: fixed; inset: 0; background: var(--p); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .lock-card { background: var(--white); padding: 40px; border-radius: 30px; text-align: center; width: 90%; max-width: 350px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+        .lock-card input { width: 100%; padding: 15px; font-size: 32px; text-align: center; border: 2px solid #ddd; border-radius: 12px; margin: 20px 0; outline: none; }
+        .btn-unlock { background: var(--s); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; }
+
+        /* 📱 हेडर और वॉइस कंट्रोल */
+        header { background: var(--p); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; height: 80px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .shop-info { display: flex; align-items: center; gap: 12px; }
+        .logo { width: 50px; height: 50px; background: white; border-radius: 50%; color: var(--p); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 24px; }
+        .mic-btn { background: #d81b60; border: none; width: 50px; height: 50px; border-radius: 50%; color: white; font-size: 22px; cursor: pointer; }
+        .mic-active { background: #2196f3; animation: pulse 1s infinite; }
+
+        /* 📁 9.25 मास्टर मेनू */
+        #sideMenu { display: none; position: fixed; top: 0; left: 0; width: 300px; height: 100%; background: white; z-index: 2000; box-shadow: 10px 0 30px rgba(0,0,0,0.3); overflow-y: auto; }
+        .menu-item { width: 100%; padding: 18px 20px; border: none; border-bottom: 1px solid #eee; text-align: left; background: none; font-size: 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+
+        /* 📄 पेज लेआउट */
+        .page { display: none; padding: 15px; animation: fadeIn 0.3s; }
+        .active-page { display: block !important; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .card { background: white; padding: 20px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        h4 { margin: 0 0 15px 0; color: var(--p); border-bottom: 2px solid #f9f9f9; padding-bottom: 8px; }
+
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        input, select { padding: 14px; border: 1.5px solid #ccc; border-radius: 10px; width: 100%; font-size: 15px; outline: none; background: #fff; }
+        input:focus { border-color: var(--p); background: #f0f7f6; }
+        
+        .btn-plus { background: var(--p); color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 5px; font-size: 16px; }
+        .btn-save { background: var(--s); color: white; border: none; padding: 18px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 18px; cursor: pointer; margin-top: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+
+        /* 📊 भारी टेबल */
+        .table-box { overflow-x: auto; margin-top: 15px; border-radius: 12px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { background: #f5f5f5; padding: 12px; text-align: left; font-size: 13px; color: #666; }
+        td { padding: 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+
+        /* 💹 बिलिंग गणित */
+        .bill-footer { border-top: 4px solid var(--p); padding-top: 20px; margin-top: 20px; }
+        .grand-total { font-size: 32px; font-weight: 900; color: var(--p); display: flex; justify-content: space-between; margin: 15px 0; }
+
+        /* 🧭 बॉटम नेविगेशन */
+        nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 85px; border-top: 1px solid #ddd; z-index: 1000; }
+        nav button { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #757575; font-size: 12px; font-weight: bold; }
+        nav button.active-nav { color: var(--p); background: #e0f2f1; border-top: 4px solid var(--p); }
+        nav button b { font-size: 24px; margin-bottom: 3px; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body onload="startApp()">
+
+<div id="lockScreen">
+    <div class="lock-card">
+        <h2>आयांश ईआरपी</h2>
+        <p>अपना सुरक्षित पिन दर्ज करें</p>
+        <input type="password" id="pinCode" maxlength="4" placeholder="••••">
+        <button class="btn-unlock" onclick="unlockDashboard()">लॉगिन करें</button>
+        <p style="font-size: 12px; color: #888; margin-top: 15px;">पिन: 1234</p>
+    </div>
+</div>
+
+<div id="mainApp" style="display:none;">
+    <header>
+        <div class="shop-info" onclick="toggleMenu()">
+            <div class="logo">A</div>
+            <div><b id="shopTitle">आयांश एंटरप्राइजेज</b><br><small id="shopLoc">पवाई - मास्टर पैनल</small></div>
+        </div>
+        <button class="mic-btn" id="mic" onclick="voiceCommand()">🎤</button>
+    </header>
+
+    <div id="sideMenu">
+        <div style="background:var(--p); color:white; padding:30px 20px; font-size:20px;">मास्टर सेटिंग्स <span onclick="toggleMenu()" style="float:right">✕</span></div>
+        <button class="menu-item" onclick="showM('m-shop')">⚙️ 1. शॉप प्रोफाइल</button>
+        <button class="menu-item" onclick="showM('m-dept')">📁 2. विभाग मास्टर</button>
+        <button class="menu-item" onclick="showM('m-staff')">👥 3. स्टाफ मास्टर (KYC)</button>
+        <button class="menu-item" onclick="showM('m-rep')">📊 4. सेल्स रिपोर्ट</button>
+        <button class="menu-item" onclick="showM('m-fix')">✏️ 5. डेटा सुधार</button>
+        <button class="menu-item" onclick="showM('m-pin')">🔐 6. पिन बदलें</button>
+        <button class="menu-item" onclick="showM('m-tech')">🆘 7. तकनीकी सपोर्ट</button>
+    </div>
+
+    <div id="pg-inward" class="page">
+        <div class="card">
+            <h4>🚚 सप्लायर एवं बिल विवरण</h4>
+            <div class="row">
+                <input type="text" id="inSup" placeholder="सप्लायर नाम">
+                <input type="number" id="inMob" placeholder="मोबाइल">
+            </div>
+            <div class="row">
+                <input type="text" id="inGst" placeholder="सप्लायर GST">
+                <input type="text" id="inBill" placeholder="बिल नंबर">
+            </div>
+            <div class="row">
+                <input type="date" id="inDate">
+                <input type="text" id="inAdd" placeholder="शहर/पता">
+            </div>
+        </div>
+        <div class="card">
+            <h4>📦 सामान की एंट्री (Stock In)</h4>
+            <div class="row">
+                <select id="inDept"></select>
+                <input type="text" id="inItem" placeholder="सामान का नाम" list="stkList">
+            </div>
+            <div class="row">
+                <input type="number" id="inQty" placeholder="मात्रा">
+                <input type="number" id="inRate" placeholder="खरीद रेट">
+            </div>
+            <div class="row">
+                <input type="text" id="inPack" placeholder="पैकिंग (जैसे 50kg)">
+                <input type="text" id="inHsn" placeholder="HSN कोड">
+            </div>
+            <div class="row">
+                <div><label style="font-size:10px">MFG Date</label><input type="date" id="inMfg"></div>
+                <div><label style="font-size:10px">EXP Date</label><input type="date" id="inExp"></div>
+            </div>
+            <button class="btn-plus" onclick="addInRow()">+ सामान जोड़ें (Plus)</button>
+            <div class="table-box">
+                <table id="inTbl">
+                    <thead><tr><th>सामान</th><th>Qty</th><th>रेट</th><th>Pack</th><th>EXP</th><th>कुल</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <button class="btn-save" onclick="saveInFinal()">पक्का स्टॉक में भेजें</button>
+        </div>
+    </div>
+
+    <div id="pg-billing" class="page active-page">
+        <div class="card">
+            <h4>👤 ग्राहक एवं बिल मास्टर</h4>
+            <div class="row">
+                <input type="text" id="cName" placeholder="ग्राहक का नाम">
+                <input type="date" id="cDate"> 
+            </div>
+            <div class="row">
+                <input type="number" id="cMob" placeholder="मोबाइल">
+                <input type="text" id="cAdd" placeholder="पता / गाँव">
+            </div>
+        </div>
+        <div class="card">
+            <h4>🛒 बिक्री काउंटर</h4>
+            <div class="row">
+                <select id="bDept"></select>
+                <input type="text" id="bItem" placeholder="सामान खोजें" list="stkList">
+            </div>
+            <div class="row">
+                <input type="number" id="bQty" placeholder="मात्रा">
+                <input type="number" id="bRate" placeholder="बिक्री रेट">
+            </div>
+            <button class="btn-plus" onclick="addBillRow()">+ बिल में जोड़ें (Plus)</button>
+            <div class="table-box">
+                <table id="bTbl">
+                    <thead><tr><th>सामान</th><th>मात्रा</th><th>रेट</th><th>कुल</th><th>हटाएं</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div class="bill-footer">
+                <div class="row">
+                    <input type="number" id="bEx" placeholder="एक्स्ट्रा चार्ज (+)" oninput="calcBill()">
+                    <input type="number" id="bLess" placeholder="डिस्काउंट (-)" oninput="calcBill()">
+                </div>
+                <div class="grand-total">
+                    <span>कुल योग:</span>
+                    <span id="gTotal">₹0.00</span>
+                </div>
+                <div class="row">
+                    <button class="btn-save" style="background:var(--err); margin:0;" onclick="saveBill('उधार')">उधार</button>
+                    <button class="btn-save" style="margin:0;" onclick="saveBill('नकद')">नकद</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="pg-stock" class="page">
+        <div class="card">
+            <h4>📦 लाइव इन्वेंट्री (रियल-टाइम)</h4>
+            <div class="table-box">
+                <table>
+                    <thead><tr><th>सामान</th><th>विभाग</th><th>स्टॉक</th><th>रेट</th><th>Exp</th></tr></thead>
+                    <tbody id="stkData"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="pg-exp" class="page">
+        <div class="card">
+            <h4>👥 स्टाफ हाजिरी व सैलरी</h4>
+            <select id="stfSelect" onchange="loadStf()"></select>
+            <div id="stfBox" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:15px;">
+                <div class="row">
+                    <button class="btn-plus" style="background:var(--s)" onclick="alert('हाजिर दर्ज')">P</button>
+                    <button class="btn-plus" style="background:var(--err)" onclick="alert('छुट्टी दर्ज')">A</button>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <h4>☕ दैनिक दुकान खर्च</h4>
+            <input type="text" id="eNote" placeholder="खर्च विवरण">
+            <input type="number" id="eAmt" placeholder="राशि ₹" style="margin-top:10px;">
+            <button class="btn-plus" style="background:#546e7a" onclick="saveExp()">खर्च सेव करें</button>
+        </div>
+    </div>
+
+    <datalist id="stkList"></datalist>
+
+    <nav>
+        <button onclick="nav('pg-inward', this)"><b>🚚</b>आवक</button>
+        <button onclick="nav('pg-billing', this)" class="active-nav"><b>📄</b>बिलिंग</button>
+        <button onclick="nav('pg-stock', this)"><b>📦</b>स्टॉक</button>
+        <button onclick="nav('pg-exp', this)"><b>🏪</b>खर्च</button>
+    </nav>
+</div>
+
+<script>
+    // 💾 विस्तृत डेटाबेस लॉजिक (40 KB का आधार)
+    let db = JSON.parse(localStorage.getItem('AyanshPro_v12')) || {
+        cfg: { name: "आयांश एंटरप्राइजेज", pin: "1234" },
+        depts: ["खाद", "बीज", "दवाई", "स्प्रेयर", "अनाज"],
+        stock: [], staff: [], sales: [], exp: []
+    };
+
+    function sync() { localStorage.setItem('AyanshPro_v12', JSON.stringify(db)); }
+
+    // 🔐 पक्का लॉगिन फंक्शन
+    function unlockDashboard() {
+        let pin = document.getElementById('pinCode').value;
+        if(pin === db.cfg.pin) {
+            document.getElementById('lockScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            initUI();
+        } else {
+            alert("गलत पिन! फिर से कोशिश करें।");
+        }
+    }
+
+    function initUI() {
+        document.getElementById('shopTitle').innerText = db.cfg.name;
+        document.getElementById('cDate').valueAsDate = new Date();
+        document.getElementById('inDate').valueAsDate = new Date();
+        refreshAll();
+    }
+
+    function toggleMenu() {
+        let m = document.getElementById('sideMenu');
+        m.style.display = (m.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function nav(id, btn) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+        document.getElementById(id).classList.add('active-page');
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-nav'));
+        if(btn) btn.classList.add('active-nav');
+        document.getElementById('sideMenu').style.display = 'none';
+        if(id === 'pg-stock') renderStk();
+    }
+
+    function showM(id) { nav(id); toggleMenu(); }
+
+    function refreshAll() {
+        let opts = db.depts.map(d => `<option value="${d}">${d}</option>`).join('');
+        document.getElementById('inDept').innerHTML = opts;
+        document.getElementById('bDept').innerHTML = opts;
+        document.getElementById('stfSelect').innerHTML = '<option value="">स्टाफ चुनें</option>' + db.staff.map((s,i) => `<option value="${i}">${s.name}</option>`).join('');
+        document.getElementById('stkList').innerHTML = db.stock.map(s => `<option value="${s.name}">`).join('');
+    }
+
+    // 🚚 आवक (प्लस बटन और बॉक्स क्लियर)
+    let inList = [];
+    function addInRow() {
+        let item = {
+            name: document.getElementById('inItem').value,
+            qty: parseFloat(document.getElementById('inQty').value),
+            rate: parseFloat(document.getElementById('inRate').value),
+            dept: document.getElementById('inDept').value,
+            pack: document.getElementById('inPack').value,
+            exp: document.getElementById('inExp').value
+        };
+        if(!item.name || !item.qty) return alert("विवरण भरें!");
+        inList.push(item);
+        
+        // बॉक्स खाली करना (रोहित जी की डिमांड)
+        document.getElementById('inItem').value=''; document.getElementById('inQty').value='';
+        document.getElementById('inRate').value=''; document.getElementById('inPack').value='';
+        document.getElementById('inExp').value='';
+        renderInTbl();
+    }
+
+    function renderInTbl() {
+        document.getElementById('inTbl').querySelector('tbody').innerHTML = inList.map(c => `<tr><td>${c.name}</td><td>${c.qty}</td><td>${c.rate}</td><td>${c.pack}</td><td>${c.exp}</td><td>₹${(c.qty*c.rate).toFixed(2)}</td></tr>`).join('');
+    }
+
+    function saveInFinal() {
+        if(inList.length === 0) return;
+        inList.forEach(c => {
+            let ex = db.stock.find(s => s.name === c.name);
+            if(ex) { ex.qty += c.qty; ex.rate = c.rate; ex.exp = c.exp; }
+            else { db.stock.push(c); }
+        });
+        alert("स्टॉक पक्का!");
+        inList = []; renderInTbl(); document.getElementById('inSup').value=''; sync(); refreshAll();
+    }
+
+    // 📄 बिलिंग लॉजिक
+    let bList = [];
+    function addBillRow() {
+        let n = document.getElementById('bItem').value, q = parseFloat(document.getElementById('bQty').value), r = parseFloat(document.getElementById('bRate').value);
+        if(!n || !q) return alert("नाम भरें!");
+        bList.push({ name: n, qty: q, rate: r, total: q * r });
+        document.getElementById('bItem').value=''; document.getElementById('bQty').value=''; document.getElementById('bRate').value='';
+        renderBTbl();
+    }
+
+    function renderBTbl() {
+        document.getElementById('bTbl').querySelector('tbody').innerHTML = bList.map((c, i) => `<tr><td>${c.name}</td><td>${c.qty}</td><td>${c.rate}</td><td>₹${c.total.toFixed(2)}</td><td onclick="bList.splice(${i},1);renderBTbl()">❌</td></tr>`).join('');
+        calcBill();
+    }
+
+    function calcBill() {
+        let sub = bList.reduce((a, b) => a + b.total, 0);
+        let ex = parseFloat(document.getElementById('bEx').value || 0);
+        let ls = parseFloat(document.getElementById('bLess').value || 0);
+        document.getElementById('gTotal').innerText = "₹" + (sub + ex - ls).toFixed(2);
+    }
+
+    function saveBill(type) {
+        if(bList.length === 0) return;
+        bList.forEach(bc => {
+            let s = db.stock.find(st => st.name === bc.name);
+            if(s) s.qty -= bc.qty;
+        });
+        alert(type + " बिल सुरक्षित!");
+        bList = []; renderBTbl(); document.getElementById('cName').value=''; sync();
+    }
+
+    // 📦 स्टॉक रेंडर
+    function renderStk() {
+        document.getElementById('stkData').innerHTML = db.stock.map(s => `<tr><td>${s.name}</td><td>${s.dept}</td><td style="color:${s.qty<10?'red':'green'}"><b>${s.qty}</b></td><td>₹${s.rate}</td><td>${s.exp||'-'}</td></tr>`).join('');
+    }
+
+    // 🎤 वॉइस कमांड
+    function voiceCommand() {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'hi-IN';
+        recognition.onstart = () => document.getElementById('mic').classList.add('mic-active');
+        recognition.onresult = (e) => {
+            document.getElementById('mic').classList.remove('mic-active');
+            let cmd = e.results[0][0].transcript.toLowerCase();
+            if(cmd.includes("बिल")) nav('pg-billing', document.querySelector('nav button:nth-child(2)'));
+            if(cmd.includes("आवक")) nav('pg-inward', document.querySelector('nav button:nth-child(1)'));
+            if(cmd.includes("स्टॉक")) nav('pg-stock', document.querySelector('nav button:nth-child(3)'));
+            let n = cmd.match(/\d+/);
+            if(n) { document.getElementById('bQty').value = n[0]; document.getElementById('inQty').value = n[0]; }
+        };
+        recognition.start();
+    }
+</script>
+</body>
+</html>
