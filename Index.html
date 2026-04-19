@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>स्मार्ट शॉप हेयर - वर्किंग वर्जन</title>
+    <style>
+        :root { --main: #1a5f7a; --sec: #27ae60; }
+        body { font-family: sans-serif; margin: 0; background: #f4f7f6; }
+        
+        /* PIN स्क्रीन (सबसे पहले यही दिखेगा) */
+        #pinOverlay { 
+            position: fixed; inset: 0; background: var(--main); 
+            z-index: 9999; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; color: white;
+        }
+        .pin-box { background: white; padding: 30px; border-radius: 15px; text-align: center; color: #333; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .pin-box input { width: 80px; padding: 15px; text-align: center; font-size: 24px; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 20px; letter-spacing: 5px; }
+        
+        /* मुख्य ऐप ढांचा */
+        #mainApp { display: none; }
+        header { background: var(--main); color: white; padding: 15px; text-align: center; font-weight: bold; font-size: 20px; }
+        .page { padding: 15px; padding-bottom: 80px; }
+        .card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        /* इनपुट स्टाइल */
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        
+        /* बटन */
+        .btn { background: var(--sec); color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        
+        /* नीचे के 5 बटन (Navigation) */
+        nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #
+      
