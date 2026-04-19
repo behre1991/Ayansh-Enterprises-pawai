@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Aayansh Enterprises - Pro ERP v10.5</title>
+    <style>
+        :root { --primary: #004d40; --accent: #1b5e20; --danger: #b71c1c; --warn: #f57f17; --white: #ffffff; --grey: #f4f7f6; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; background: var(--grey); color: #333; overflow-x: hidden; }
+        
+        /* 🔐 एडवांस सिक्योरिटी लॉक */
+        #masterLock { position: fixed; inset: 0; background: linear-gradient(45deg, var(--primary), #00251a); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .lock-panel { background: var(--white); padding: 40px; border-radius: 35px; text-align: center; width: 90%; max-width: 400px; box-shadow: 0 25px 50px rgba(0,0,0,0.4); }
+        .lock-panel input { width: 100%; padding: 20px; font-size: 35px; text-align: center; border: 3px solid #eee; border-radius: 20px; letter-spacing: 15px; margin: 25px 0; outline: none; transition: 0.3s; }
+        .lock-panel input:focus { border-color: var(--primary); background: #e0f2f1; }
+
+        /* 📱 प्रीमियम हेडर */
+        header { background: var(--primary); color: var(--white); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; height: 80px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .shop-brand { display: flex; align-items: center; gap: 15px; cursor: pointer; }
+        #mainLogo { width: 55px; height: 55px; background: var(--white); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 26px; font-weight: 900; border: 3px solid #fff; box-shadow: 0 3px 10px rgba(0,0,0,0.2); }
+        .voice-mic { background: #ff1744; border: none; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 20px rgba(255,23,68,0.4); transition: 0.3s; }
+        .voice-mic.active { background: #2196f3; box-shadow: 0 0 20px #2196f3; animation: pulse 1s infinite; }
+
+        /* 📁 9.25 मास्टर साइड मेनू */
+        #sidePanel { display: none; position: fixed; top: 0; left: 0; width: 320px; height: 100%; background: var(--white); z-index: 2000; box-shadow: 15px 0 40px rgba(0,0,0,0.3); overflow-y: auto; border-top-right-radius: 30px; }
+        .menu-top { background: var(--primary); color: var(--white); padding: 35px 20px; font-size: 22px; font-weight: bold; position: relative; }
+        .menu-btn { width: 100%; padding: 20px 25px; border: none; border-bottom: 1px solid #f0f0f0; text-align: left; background: none; font-size: 17px; cursor: pointer; display: flex; align-items: center; gap: 18px; transition: 0.2s; }
+        .menu-btn:active { background: #e8f5e9; color: var(--primary); }
+
+        /* 📄 विस्तृत पेज लेआउट */
+        .page { display: none; padding: 20px; padding-bottom: 500px; animation: slideUp 0.4s ease-out; }
+        .active-page { display: block !important; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(50px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .box { background: var(--white); padding: 25px; border-radius: 25px; margin-bottom: 25px; box-shadow: 0 8px 20px rgba(0,0,0,0.06); border: 1px solid #eef2f1; }
+        h4 { margin: 0 0 20px 0; color: var(--primary); font-size: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 2px solid #f1f1f1; padding-bottom: 12px; }
+
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+        input, select, textarea { padding: 16px; border: 2px solid #dce4e2; border-radius: 15px; width: 100%; font-size: 16px; outline: none; transition: 0.3s; background: #fff; }
+        input:focus { border-color: var(--accent); background: #f0fdf4; box-shadow: 0 0 8px rgba(27,94,32,0.1); }
+        
+        .btn-plus { background: var(--primary); color: white; border: none; padding: 18px; border-radius: 15px; font-weight: bold; width: 100%; cursor: pointer; font-size: 18px; margin-top: 10px; box-shadow: 0 4px 12px rgba(0,77,64,0.2); }
+        .btn-final { background: var(--accent); color: white; border: none; padding: 22px; border-radius: 18px; font-weight: 900; width: 100%; cursor: pointer; font-size: 20px; margin-top: 30px; letter-spacing: 1px; }
+
+        /* 📊 एडवांस डेटा टेबल्स */
+        .table-scroll { overflow-x: auto; border-radius: 20px; border: 1px solid #eee; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; background: white; min-width: 800px; }
+        th { background: #f8fbf9; color: var(--primary); padding: 18px 12px; text-align: left; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 18px 12px; border-top: 1px solid #f1f1f1; font-size: 15px; }
+
+        /* 💹 डायनामिक बिलिंग फुटर */
+        .bill-action { position: fixed; bottom: 85px; left: 0; width: 100%; background: white; border-top: 8px solid var(--primary); padding: 25px; box-sizing: border-box; z-index: 999; box-shadow: 0 -15px 35px rgba(0,0,0,0.15); border-radius: 30px 30px 0 0; }
+        .total-box { display: flex; justify-content: space-between; align-items: center; margin: 15px 0; }
+        #grandTotal { font-size: 35px; font-weight: 900; color: var(--primary); }
+
+        /* 🧭 बॉटम नेविगेशन */
+        nav { position: fixed; bottom: 0; width: 100%; background: var(--white); display: flex; height: 85px; z-index: 1000; border-top: 1px solid #ddd; }
+        nav button { flex: 1; border: none; background: none; font-size: 13px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #90a4ae; font-weight: 600; gap: 5px; }
+        nav button b { font-size: 26px; }
+        nav button.nav-act { color: var(--primary); background: #e0f2f1; border-top: 5px solid var(--primary); }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body onload="initApp()">
+
+<div id="masterLock">
+    <div class="lock-panel">
+        <h2 id="lBrand">Aayansh Enterprises</h2>
+        <p>प्रोफेशनल ईआरपी पिन डालें</p>
+        <input type="password" id="pinIn" maxlength="4" placeholder="••••" oninput="verify(this.value)">
+        <p style="color:#888; font-size:12px;">Security Protected by AI</p>
+    </div>
+</div>
+
+<div id="appContainer" style="display:none;">
+    <header>
+        <div class="shop-brand" onclick="toggleMenu()">
+            <div id="mainLogo">A</div>
+            <div><b id="hTitle">आयांश इंटरप्राइजेज</b><br><small id="hLoc">पवाई - दुकान प्रबंधन</small></div>
+        </div>
+        <button class="voice-mic" id="micBtn" onclick="startListen()">🎤</button>
+    </header>
+
+    <div id="sidePanel">
+        <div class="menu-top">मास्टर सेटिंग्स <span onclick="toggleMenu()" style="float:right; cursor:pointer">✕</span></div>
+        <button class="menu-btn" onclick="openMaster('p-shop')"><i>⚙️</i> 1. दुकान प्रोफाइल (नाम/GST)</button>
+        <button class="menu-btn" onclick="openMaster('p-dept')"><i>📁</i> 2. विभाग मास्टर</button>
+        <button class="menu-btn" onclick="openMaster('p-staff')"><i>👥</i> 3. स्टाफ KYC (फोटो/आधार)</button>
+        <button class="menu-btn" onclick="openMaster('p-rep')"><i>📊</i> 4. रिपोर्ट (बिक्री/स्टॉक)</button>
+        <button class="menu-btn" onclick="openMaster('p-fix')"><i>✏️</i> 5. एंट्री सुधार (Edit)</button>
+        <button class="menu-btn" onclick="openMaster('p-sec')"><i>🔐</i> 6. सिक्योरिटी व पिन</button>
+        <button class="menu-btn" onclick="openMaster('p-lang')"><i>🌐</i> 7. भाषा एवं वॉइस</button>
+        <button class="menu-btn" onclick="openMaster('p-supp')"><i>🆘</i> 8. टेक्निकल सपोर्ट</button>
+        <button class="menu-btn" onclick="openMaster('p-help')"><i>❓</i> 9. हेल्प सेंटर</button>
+    </div>
+
+    <div id="pg-inw" class="page">
+        <div class="box">
+            <h4>🚚 सप्लायर मास्टर विवरण</h4>
+            <div class="grid-2">
+                <input type="text" id="isName" placeholder="सप्लायर का नाम">
+                <input type="number" id="isMob" placeholder="मोबाइल नंबर">
+            </div>
+            <div class="grid-2">
+                <input type="text" id="isGst" placeholder="सप्लायर GST नंबर">
+                <input type="text" id="isBill" placeholder="बिल नंबर (Invoice)">
+            </div>
+            <div class="grid-2">
+                <input type="date" id="isDate" title="बिल की तारीख">
+                <input type="text" id="isAdd" placeholder="सप्लायर का पूरा पता">
+            </div>
+        </div>
+        <div class="box">
+            <h4>📦 सामान एंट्री (Stock Plus)</h4>
+            <div class="grid-2">
+                <select id="isDept"></select>
+                <input type="text" id="isItem" placeholder="सामान का नाम" list="stkList">
+            </div>
+            <div class="grid-2">
+                <input type="number" id="isQty" placeholder="मात्रा (Quantity)">
+                <input type="number" id="isRate" placeholder="खरीद रेट (Rate)">
+            </div>
+            <div class="grid-2">
+                <input type="text" id="isPack" placeholder="पैकिंग साइज (जैसे: 50kg)">
+                <input type="text" id="isHsn" placeholder="HSN कोड">
+            </div>
+            <div class="grid-2">
+                <div><small>मैन्युफैक्चरिंग (MFG)</small><input type="date" id="isMfg"></div>
+                <div><small>एक्सपायरी (EXP)</small><input type="date" id="isExp"></div>
+            </div>
+            <input type="number" id="isTax" placeholder="GST % (जैसे: 12, 18)" style="margin-top:10px;">
+            <button class="btn-plus" onclick="addInwardItem()">+ सामान जोड़ें (कॉलम खाली करें)</button>
+            
+            <div class="table-scroll">
+                <table id="inwTable">
+                    <thead><tr><th>सामान</th><th>मात्रा</th><th>रेट</th><th>Pack</th><th>EXP</th><th>Total</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <button class="btn-final" onclick="saveInwardFinal()">पक्का करें (स्टॉक में भेजें)</button>
+        </div>
+    </div>
+
+    <div id="pg-bill" class="page active-page">
+        <div class="box">
+            <h4>👤 ग्राहक मास्टर</h4>
+            <div class="grid-2">
+                <input type="text" id="bcName" placeholder="ग्राहक का नाम">
+                <input type="number" id="bcMob" placeholder="मोबाइल नंबर">
+            </div>
+            <div class="grid-2">
+                <input type="text" id="bcAdd" placeholder="पता / गाँव">
+                <input type="date" id="bcDate" title="बिल तारीख">
+            </div>
+        </div>
+        <div class="box">
+            <h4>🛒 बिक्री काउंटर</h4>
+            <div class="grid-2">
+                <select id="bcDept"></select>
+                <input type="text" id="bcItem" placeholder="सामान चुनें" list="stkList">
+            </div>
+            <div class="grid-2">
+                <input type="number" id="bcQty" placeholder="मात्रा">
+                <input type="number" id="bcRate" placeholder="रेट">
+            </div>
+            <button class="btn-plus" onclick="addBillItem()">+ बिल में जोड़ें (+)</button>
+            
+            <div class="table-scroll">
+                <table id="billTable">
+                    <thead><tr><th>सामान</th><th>Qty</th><th>रेट</th><th>कुल</th><th>Action</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="bill-action">
+            <div class="grid-2">
+                <input type="number" id="bcExtra" placeholder="हमाली/भाड़ा (+)" oninput="calcBill()">
+                <input type="number" id="bcLess" placeholder="डिस्काउंट (-)" oninput="calcBill()">
+            </div>
+            <div class="total-box">
+                <span style="font-weight:bold; font-size:20px;">कुल देय:</span>
+                <span id="grandTotal">₹0.00</span>
+            </div>
+            <div class="grid-2">
+                <button class="btn-final" style="background:var(--danger); margin:0;" onclick="saveBill('CREDIT')">उधार (खाता)</button>
+                <button class="btn-final" style="margin:0;" onclick="saveBill('CASH')">नकद (प्रिंट)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pg-stk" class="page">
+        <div class="box">
+            <h4>📦 लाइव इन्वेंट्री (स्टॉक रिपोर्ट)</h4>
+            <div class="table-scroll">
+                <table>
+                    <thead><tr><th>सामान</th><th>विभाग</th><th>स्टॉक</th><th>खरीद भाव</th><th>एक्सपायरी</th></tr></thead>
+                    <tbody id="stkBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="pg-khata" class="page">
+        <div class="box">
+            <h4>🔄 माल वापसी (Stock Return)</h4>
+            <input type="text" id="retCust" placeholder="किसान का नाम">
+            <div class="grid-2" style="margin-top:10px;">
+                <input type="text" id="retItem" placeholder="वापस सामान">
+                <input type="number" id="retAmt" placeholder="वापसी राशि">
+            </div>
+            <button class="btn-plus" style="background:var(--warn)" onclick="processReturn()">वापसी सुरक्षित करें</button>
+        </div>
+        <div class="box">
+            <h4>👥 स्टाफ हाजिरी व सैलरी</h4>
+            <select id="staffSel" onchange="showStaffDash()"></select>
+            <div id="staffDash" style="display:none; margin-top:20px;">
+                <div class="grid-2">
+                    <button class="btn-plus" style="background:var(--accent)" onclick="markAtt('P')">हाजिर (P)</button>
+                    <button class="btn-plus" style="background:var(--danger)" onclick="markAtt('A')">छुट्टी (A)</button>
+                </div>
+                <div class="grid-2" style="margin-top:10px;">
+                    <input type="number" id="staffAdv" placeholder="एडवांस दिया">
+                    <input type="number" id="staffDue" readonly style="background:#f9f9f9">
+                </div>
+            </div>
+        </div>
+        <div class="box">
+            <h4>🏪 दैनिक दुकान खर्च</h4>
+            <input type="text" id="expNote" placeholder="खर्च विवरण">
+            <input type="number" id="expVal" placeholder="खर्च राशि ₹" style="margin-top:10px;">
+            <button class="btn-plus" style="background:#546e7a" onclick="saveExp()">खर्च दर्ज करें</button>
+        </div>
+    </div>
+
+    <div id="p-shop" class="page">
+        <div class="box">
+            <h4>⚙️ शॉप मास्टर सेटिंग</h4>
+            <label>दुकान का नाम</label><input type="text" id="setShopN">
+            <label>संपर्क नंबर</label><input type="number" id="setShopM" style="margin-top:10px;">
+            <label>GST नंबर</label><input type="text" id="setShopG" style="margin-top:10px;">
+            <button class="btn-final" onclick="updateShopCfg()">सेटिंग सेव करें</button>
+        </div>
+    </div>
+
+    <div id="p-staff" class="page">
+        <div class="box">
+            <h4>👥 स्टाफ KYC मास्टर</h4>
+            <input type="text" id="kycN" placeholder="लड़के का पूरा नाम">
+            <input type="text" id="kycP" placeholder="पद (जैसे: मैनेजर/हेल्पर)" style="margin-top:10px;">
+            <input type="number" id="kycS" placeholder="फिक्स मंथली सैलरी" style="margin-top:10px;">
+            
