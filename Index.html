@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>आयांश एंटरप्राइजेज - मास्टर कंट्रोल</title>
+    <style>
+        :root { --p: #01579b; --s: #2e7d32; --err: #c62828; --bg: #f4f6f9; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; }
+        body { margin: 0; background: var(--bg); padding-bottom: 90px; }
+
+        /* 🔐 पक्का लॉगिन स्क्रीन */
+        #lockScreen { position: fixed; inset: 0; background: var(--p); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+        .lock-box { background: white; padding: 40px; border-radius: 30px; text-align: center; width: 90%; max-width: 380px; box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
+        .lock-box input { width: 100%; padding: 15px; font-size: 32px; text-align: center; border: 2px solid #ddd; border-radius: 12px; margin: 20px 0; outline: none; }
+        .btn-unlock { background: var(--s); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 18px; }
+
+        /* 📱 हेडर */
+        header { background: var(--p); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; height: 80px; }
+        .shop-info { cursor: pointer; }
+        .mic-btn { background: #ff1744; border: none; width: 50px; height: 50px; border-radius: 50%; color: white; font-size: 24px; cursor: pointer; }
+
+        /* 📁 9 मास्टर पॉइंट्स मेनू */
+        #sideMenu { display: none; position: fixed; top: 0; left: 0; width: 300px; height: 100%; background: white; z-index: 2000; box-shadow: 10px 0 30px rgba(0,0,0,0.2); overflow-y: auto; }
+        .menu-head { background: var(--p); color: white; padding: 25px; font-weight: bold; }
+        .menu-item { width: 100%; padding: 16px 20px; border: none; border-bottom: 1px solid #eee; text-align: left; background: none; font-size: 15px; cursor: pointer; display: flex; align-items: center; gap: 12px; }
+
+        /* 📄 पेज और कार्ड्स */
+        .page { display: none; padding: 15px; }
+        .active-pg { display: block; }
+        .card { background: white; padding: 20px; border-radius: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        h4 { margin: 0 0 15px 0; color: var(--p); border-bottom: 2px solid #f0f0f0; padding-bottom: 8px; }
+
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        input, select { padding: 14px; border: 1.5px solid #ccc; border-radius: 10px; width: 100%; font-size: 15px; outline: none; }
+        
+        .btn-add { background: var(--p); color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; margin: 10px 0; }
+        .btn-save { background: var(--s); color: white; border: none; padding: 18px; border-radius: 12px; width: 100%; font-weight: bold; font-size: 18px; cursor: pointer; }
+
+        /* 📊 टेबल्स */
+        .table-wrap { overflow-x: auto; border: 1px solid #eee; border-radius: 12px; background: white; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { background: #f9f9f9; padding: 12px; text-align: left; font-size: 12px; color: #666; }
+        td { padding: 14px 12px; border-bottom: 1px solid #f1f1f1; font-size: 14px; }
+
+        /* 🧭 बॉटम नेविगेशन */
+        nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; height: 85px; border-top: 1px solid #ddd; z-index: 1000; }
+        nav button { flex: 1; border: none; background: none; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-size: 12px; font-weight: bold; }
+        nav button.active { color: var(--p); background: #e3f2fd; border-top: 4px solid var(--p); }
+        nav button i { font-style: normal; font-size: 26px; margin-bottom: 4px; }
+    </style>
+</head>
+<body onload="checkSync()">
+
+<div id="lockScreen">
+    <div class="lock-box">
+        <h2 style="margin:0; color:var(--p)">आयांश ERP</h2>
+        <p>सिक्योरिटी पिन डालें</p>
+        <input type="password" id="pinIn" maxlength="4" placeholder="••••">
+        <button class="btn-unlock" onclick="login()">प्रवेश करें</button>
+    </div>
+</div>
+
+<div id="appBody" style="display:none;">
+    <header>
+        <div class="shop-info" onclick="toggleMenu()">
+            <div style="font-size: 20px; font-weight: bold;" id="shopTitle">आयांश एंटरप्राइजेज</div>
+            <div style="font-size: 12px; opacity: 0.8;">पवाई - मास्टर पैनल</div>
+        </div>
+        <button class="mic-btn" id="mic" onclick="voice()">🎤</button>
+    </header>
+
+    <div id="sideMenu">
+        <div class="menu-head">9.25 मास्टर कंट्रोल <span onclick="toggleMenu()" style="float:right">✕</span></div>
+        <button class="menu-item" onclick="nav('m-shop')">⚙️ 1. शॉप प्रोफाइल (नाम/GST)</button>
+        <button class="menu-item" onclick="nav('m-dept')">📁 2. विभाग मास्टर</button>
+        <button class="menu-item" onclick="nav('m-staff')">👥 3. स्टाफ KYC (आधार/सैलरी)</button>
+        <button class="menu-item" onclick="nav('m-ledger')">📔 4. खाता मास्टर (Ledger)</button>
+        <button class="menu-item" onclick="nav('m-report')">📊 5. सेल्स और स्टॉक रिपोर्ट</button>
+        <button class="menu-item" onclick="nav('m-edit')">✏️ 6. डेटा सुधार (Edit)</button>
+        <button class="menu-item" onclick="nav('m-pin')">🔐 7. पिन और सुरक्षा</button>
+        <button class="menu-item" onclick="nav('m-lang')">🌐 8. भाषा (Hindi/English)</button>
+        <button class="menu-item" onclick="nav('m-help')">❓ 9. तकनीकी सपोर्ट</button>
+    </div>
+
+    <div id="pg-bill" class="page active-pg">
+        <div class="card">
+            <h4>👤 ग्राहक विवरण</h4>
+            <div class="row">
+                <input type="text" id="cName" placeholder="ग्राहक का नाम">
+                <input type="number" id="cMob" placeholder="मोबाइल नंबर">
+            </div>
+            <input type="date" id="cDate">
+        </div>
+        <div class="card">
+            <h4>🛒 बिक्री काउंटर</h4>
+            <div class="row">
+                <select id="bDept"></select>
+                <input type="text" id="bItem" placeholder="सामान का नाम" list="stkList">
+            </div>
+            <div class="row">
+                <input type="number" id="bQty" placeholder="मात्रा">
+                <input type="number" id="bRate" placeholder="बिक्री रेट">
+            </div>
+            <button class="btn-add" onclick="addBill()">+ बिल में जोड़ें (Box Clear)</button>
+            <div class="table-wrap">
+                <table id="billTable">
+                    <thead><tr><th>सामान</th><th>मात्रा</th><th>रेट</th><th>कुल</th><th>X</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div style="font-size:32px; font-weight:900; color:var(--p); text-align:right; margin:15px 0;" id="gTotal">₹0.00</div>
+            <div class="row">
+                <button class="btn-save" style="background:var(--err); margin:0;" onclick="saveBill('उधार')">उधार खाता</button>
+                <button class="btn-save" style="margin:0;" onclick="saveBill('नकद')">नकद बिल</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="pg-stock" class="page">
+        <div class="card">
+            <h4>📦 लाइव इन्वेंट्री</h4>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>सामान</th><th>विभाग</th><th>स्टॉक</th><th>खरीद रेट</th></tr></thead>
+                    <tbody id="stkBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="m-ledger" class="page">
+        <div class="card">
+            <h4>📔 ग्राहकों का उधार खाता (Ledger)</h4>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>तारीख</th><th>नाम</th><th>विवरण</th><th>उधार (Dr)</th><th>जमा (Cr)</th></tr></thead>
+                    <tbody id="ledgerBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="m-staff" class="page">
+        <div class="card">
+            <h4>👥 स्टाफ केवाईसी और सैलरी</h4>
+            <input type="text" id="sName" placeholder="स्टाफ का नाम">
+            <input type="number" id="sAadhar" placeholder="आधार कार्ड नंबर" style="margin-top:10px;">
+            <input type="number" id="sSal" placeholder="महीने की सैलरी ₹" style="margin-top:10px;">
+            <button class="btn-save" onclick="saveStaff()">स्टाफ सुरक्षित करें</button>
+        </div>
+        <div class="card" id="staffDisplay"></div>
+    </div>
+
+    <datalist id="stkList"></datalist>
+
+    <nav>
+        <button onclick="nav('pg-bill', this)" class="active"><i>📄</i>बिलिंग</button>
+        <button onclick="nav('pg-stock', this)"><i>📦</i>स्टॉक</button>
+        <button onclick="nav('m-ledger', this)"><i>📔</i>खाता</button>
+        <button onclick="nav('m-staff', this)"><i>👥</i>स्टाफ</button>
+    </nav>
+</div>
+
+<script>
+    // 💾 मास्टर डेटाबेस लॉजिक
+    let db = JSON.parse(localStorage.getItem('AyanshFull_v9')) || {
+        cfg: { name: "आयांश एंटरप्राइजेज", pin: "1234" },
+        depts: ["खाद", "बीज", "दवाई", "स्प्रेयर", "अनाज"],
+        stock: [], staff: [], ledger: []
+    };
+
+    function sync() { localStorage.setItem('AyanshFull_v9', JSON.stringify(db)); }
+
+    // 🔐 पक्का लॉगिन (Tested)
+    function login() {
+        if(document.getElementById('pinIn').value === db.cfg.pin) {
+            document.getElementById('lockScreen').style.display = 'none';
+            document.getElementById('appBody').style.display = 'block';
+            initApp();
+        } else { alert("गलत पिन! सही पिन डालें।"); }
+    }
+
+    function initApp() {
+        document.getElementById('shopTitle').innerText = db.cfg.name;
+        document.getElementById('cDate').valueAsDate = new Date();
+        refreshMasters();
+    }
+
+    function toggleMenu() {
+        let m = document.getElementById('sideMenu');
+        m.style.display = (m.style.display === 'block') ? 'none' : 'block';
+    }
+
+    function nav(id, btn) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active-pg'));
+        document.getElementById(id).classList.add('active-pg');
+        if(btn && btn.tagName === 'BUTTON') {
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+        document.getElementById('sideMenu').style.display = 'none';
+        if(id === 'pg-stock') renderStk();
+        if(id === 'm-ledger') renderLedger();
+        if(id === 'm-staff') renderStaff();
+    }
+
+    function refreshMasters() {
+        let h = db.depts.map(d => `<option value="${d}">${d}</option>`).join('');
+        document.getElementById('bDept').innerHTML = h;
+        document.getElementById('stkList').innerHTML = db.stock.map(s => `<option value="${s.name}">`).join('');
+    }
+
+    // 🛒 बिलिंग लॉजिक
+    let cart = [];
+    function addBill() {
+        let n = document.getElementById('bItem').value, q = parseFloat(document.getElementById('bQty').value), r = parseFloat(document.getElementById('bRate').value);
+        if(!n || !q) return alert("नाम और मात्रा भरें!");
+        cart.push({ name: n, qty: q, rate: r, total: q * r });
+        
+        // बॉक्स क्लियर (Blank)
+        document.getElementById('bItem').value=''; document.getElementById('bQty').value=''; document.getElementById('bRate').value='';
+        renderBill();
+    }
+
+    function renderBill() {
+        document.getElementById('billTable').querySelector('tbody').innerHTML = cart.map((c,i) => `<tr><td>${c.name}</td><td>${c.qty}</td><td>${c.rate}</td><td>₹${c.total.toFixed(2)}</td><td onclick="cart.splice(${i},1);renderBill()">❌</td></tr>`).join('');
+        let t = cart.reduce((sum, item) => sum + item.total, 0);
+        document.getElementById('gTotal').innerText = "₹" + t.toFixed(2);
+    }
+
+    function saveBill(mode) {
+        if(cart.length === 0) return;
+        let total = parseFloat(document.getElementById('gTotal').innerText.replace('₹',''));
+        if(mode === 'उधार') {
+            db.ledger.push({ date: document.getElementById('cDate').value, name: document.getElementById('cName').value || "अज्ञात", desc: "उधार बिल", dr: total, cr: 0 });
+        }
+        cart.forEach(c => {
+            let s = db.stock.find(i => i.name === c.name);
+            if(s) s.qty -= c.qty; else db.stock.push({name: c.name, qty: -c.qty, rate: c.rate, dept: "सामान्य"});
+        });
+        alert(mode + " बिल सुरक्षित!"); cart = []; renderBill(); sync();
+    }
+
+    // 📊 रिपोर्ट्स
+    function renderStk() {
+        document.getElementById('stkBody').innerHTML = db.stock.map(s => `<tr><td>${s.name}</td><td>${s.dept}</td><td style="color:${s.qty<5?'red':'green'}">${s.qty}</td><td>₹${s.rate}</td></tr>`).join('');
+    }
+
+    function renderLedger() {
+        document.getElementById('ledgerBody').innerHTML = db.ledger.map(l => `<tr><td>${l.date}</td><td>${l.name}</td><td>${l.desc}</td><td style="color:red">${l.dr}</td><td style="color:green">${l.cr}</td></tr>`).join('');
+    }
+
+    // 👥 स्टाफ
+    function saveStaff() {
+        db.staff.push({ name: document.getElementById('sName').value, aadhar: document.getElementById('sAadhar').value, sal: document.getElementById('sSal').value });
+        sync(); renderStaff(); alert("स्टाफ सुरक्षित!");
+    }
+    function renderStaff() {
+        document.getElementById('staffDisplay').innerHTML = db.staff.map(s => `<div style="padding:10px; border-bottom:1px solid #eee;"><b>${s.name}</b><br><small>सैलरी: ₹${s.sal} | आधार: ${s.aadhar}</small></div>`).join('');
+    }
+
+    // 🎤 वॉइस
+    function voice() {
+        const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if(!Speech) return alert("वॉइस सपोर्ट नहीं है");
+        const rec = new Speech();
+        rec.lang = 'hi-IN';
+        rec.onresult = (e) => {
+            let cmd = e.results[0][0].transcript.toLowerCase();
+            if(cmd.includes("बिल")) nav('pg-bill', document.querySelector('nav button:nth-child(1)'));
+            if(cmd.includes("स्टॉक")) nav('pg-stock', document.querySelector('nav button:nth-child(2)'));
+            if(cmd.includes("खाता")) nav('m-ledger', document.querySelector('nav button:nth-child(3)'));
+        };
+        rec.start();
+    }
+</script>
+</body>
+</html>
